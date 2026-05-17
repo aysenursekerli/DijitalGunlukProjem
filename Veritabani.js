@@ -15,11 +15,12 @@ export const DatabaseManager = {
             
             request.onupgradeneeded = (e) => {
                 const db = e.target.result;
-                if (db.objectStoreNames.contains('notebooks')) db.deleteObjectStore('notebooks');
-                if (db.objectStoreNames.contains('drawings')) db.deleteObjectStore('drawings');
-                
-                db.createObjectStore('notebooks', { keyPath: 'id' });
-                db.createObjectStore('drawings', { keyPath: 'id', autoIncrement: true });
+                if (!db.objectStoreNames.contains('notebooks')) {
+                    db.createObjectStore('notebooks', { keyPath: 'id' });
+                }
+                if (!db.objectStoreNames.contains('drawings')) {
+                    db.createObjectStore('drawings', { keyPath: 'id', autoIncrement: true });
+                }
             };
         });
     },

@@ -29,21 +29,29 @@ Ben **AYŞE NUR ŞEKERLİ**, Pamukkale Üniversitesi Yönetim Bilişim Sistemler
 
 ---
 
+## 🛠️ Tech Stack (Kullanılan Teknolojiler)
 
-## Takıldığım Yerler ve Yapay Zeka ile Çözümlerimiz
+*   **Çekirdek Teknolojiler:** HTML5, Vanilla JavaScript (ES6 Modules), CSS3
+*   **Veritabanı:** IndexedDB (Yerel Tarayıcı Veritabanı)
+*   **Çizim ve Render:** HTML5 Canvas API
+*   **Arayüz İkonları:** Lucide Icons (v0.378.0)
+*   **Sayfa Çevirme Animasyonu:** St.PageFlip (v2.0.7)
 
+---
 
-* **Sorun:** Sayfayı çevirmeye çalışıyorum ama çevrilmiyor! Çünkü üstteki çizim katmanı tıklamaları engelliyordu.
-  * **Çözüm Promptu:** *"Üst katmana `pointer-events: none` ver, sadece içindeki nesnelere `auto` ver ki boşluğa tıklayınca sayfa çevrilsin."*
-  
-* **Sorun:** Şekil ekliyorum ama kalemle çizmişim gibi kalıyor, yerinden oynamıyor.
-  * **Çözüm Promptu:** *"Şekilleri canvas'a çizme, onları ayrı bir HTML div'i olarak ekle ve etrafına 8 tane tutma noktası olan bir çerçeve yap."*
+## 🤖 Yapay Zeka Metodolojisi
 
-* **Sorun:** Düzenleme moduna bir giriyorum, her yer mavi çerçeve dolu! Gözüm yoruldu.
-  * **Çözüm Promptu:** *"Hepsini gizle! Sadece tıkladığım nesnenin çerçevesi ve döndürme kolu görünsün, diğerleri tertemiz kalsın."*
+Geliştirme, hata ayıklama ve kod mimarisi süreçlerinde **Gemini 3.1** dil modeli aktif olarak kullanılmıştır. Yapay zeka, özellikle IndexedDB asenkron yönetimleri, Canvas üzerinde real-time çizim optimizasyonları ve modüler kod mimarisi (SRP, DIP prensipleri) konularında bir mentor ve pair-programmer olarak projeye dahil edilmiştir.
 
-* **Sorun:** Sayfa silince eski çizimler yeni sayfaların üstüne biniyordu.
-  * **Çözüm Promptu:** *"Sayfaları numarayla değil `pageId` (UUID) ile takip et, veritabanını buna göre sıfırla ve yeniden kur."*
+---
+
+## 📖 Kullanım Kılavuzu
+
+*   **Yeni Defter Oluşturma:** Kütüphane ekranındaki "Yeni Günlük Ekle" butonuna tıklayın, adını ve kapağını seçin.
+*   **Çizim Yapma ve Medya Ekleme:** Defter içindeyken üstteki araç çubuğunu kullanın. "Kalem" ikonuna tıklayarak çizebilir, "Şekil" ve "Sticker" ikonlarından medyalar ekleyebilirsiniz.
+*   **Sayfa Değiştirme:** Çizim modundayken "El (Hand)" aracını seçin ve sayfanın kenarlarından tutarak sürükleyip çevirin.
+*   **Defter Silme/Ayarlar:** Kütüphanedeki defter kapağının üstünde beliren üç noktaya tıklayarak defterin adını değiştirebilir veya PIN kodu ile şifreleyebilirsiniz.
+*   **İçeriği Temizleme:** Eklediğiniz nesneleri (sticker, metin vb.) üzerlerine tıklayıp çöp kutusuna basarak silebilir, çizimleri geri al tuşuyla temizleyebilirsiniz.
 
 ---
 

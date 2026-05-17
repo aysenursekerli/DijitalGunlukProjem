@@ -1,5 +1,4 @@
 import { DatabaseManager } from './Veritabani.js';
-import { AppManager } from './Arayuz.js';
 
 export class DrawingPad {
     constructor() {
@@ -86,7 +85,7 @@ export class DrawingPad {
             }
             
             const pageId = this.activeCanvas.dataset.page;
-            const notebookId = AppManager.activeNotebookId;
+            const notebookId = this.getActiveNotebookId();
             
             this.globalHistory = this.globalHistory.filter(s => !(s.notebookId === notebookId && s.pageId === pageId));
             
@@ -94,7 +93,7 @@ export class DrawingPad {
             DatabaseManager.syncDrawings(notebookId, pageId, this.globalHistory);
             
             this.redrawCanvas(this.activeCanvas);
-            if(typeof AppManager !== 'undefined') AppManager.renderSidebar();
+            if(this.onRenderSidebar) this.onRenderSidebar();
         });
     }
 
@@ -122,7 +121,7 @@ export class DrawingPad {
         pageContent.querySelectorAll('.static-media').forEach(el => el.remove());
         
         const pageId = canvas.dataset.page;
-        const nb = AppManager.notebooks.find(n => n.id === AppManager.activeNotebookId);
+        const nb = this.getAppNotebooks().find(n => n.id === this.getActiveNotebookId());
         if(nb) {
             const page = nb.pages.find(p => p.id === pageId);
             if(page && page.media) {
@@ -163,7 +162,7 @@ export class DrawingPad {
         }
         
         const pageId = this.activeCanvas.dataset.page;
-        const notebookId = AppManager.activeNotebookId;
+        const notebookId = this.getActiveNotebookId();
 
         // Aktif canvas'ın en son izini bul ve history'den çıkart
         for(let i = this.globalHistory.length -1; i >= 0; i--) {
@@ -178,7 +177,7 @@ export class DrawingPad {
         DatabaseManager.syncDrawings(notebookId, pageId, this.globalHistory);
         
         requestAnimationFrame(() => this.redrawCanvas(this.activeCanvas));
-        if(typeof AppManager !== 'undefined') AppManager.renderSidebar();
+        if(this.onRenderSidebar) this.onRenderSidebar();
     }
 
     redrawCanvas(canvas) {
@@ -194,7 +193,7 @@ export class DrawingPad {
         ctx.clearRect(0, 0, canvas.width, canvas.height); 
         
         const pageId = canvas.dataset.page;
-        const notebookId = AppManager.activeNotebookId;
+        const notebookId = this.getActiveNotebookId();
 
         const strokes = this.globalHistory.filter(s => s.notebookId === notebookId && s.pageId === pageId);
         strokes.forEach(stroke => {
@@ -482,7 +481,7 @@ export class DrawingPad {
         if(!this.activePageContent) return; 
         
         if (!mediaData.id) {
-            mediaData.id = 'media-' + Date.now() + '-' + Math.floor(Math.random() * 1000);
+            mediaData.id = 'media-' + crypto.randomUUID();
             mediaData.x = 50;
             mediaData.y = 50;
             mediaData.width = mediaData.width || 100;
@@ -724,26 +723,26 @@ export class DrawingPad {
     }
 
     saveMediaToDB(mediaData) {
-        if (!AppManager.activeNotebookId || !this.activeCanvas) return;
+        if (!this.getActiveNotebookId() || !this.activeCanvas) return;
         const pageId = this.activeCanvas.dataset.page;
-        const nb = AppManager.notebooks.find(n => n.id === AppManager.activeNotebookId);
+        const nb = this.getAppNotebooks().find(n => n.id === this.getActiveNotebookId());
         if(!nb) return;
         const page = nb.pages.find(p => p.id === pageId);
         if(!page) return;
         if(!page.media) page.media = [];
         page.media.push(mediaData);
-        DatabaseManager.saveNotebooks(AppManager.notebooks);
+        DatabaseManager.saveNotebooks(this.getAppNotebooks());
     }
 
     deleteMediaFromDB(mediaId) {
-        if (!AppManager.activeNotebookId || !this.activeCanvas) return;
+        if (!this.getActiveNotebookId() || !this.activeCanvas) return;
         const pageId = this.activeCanvas.dataset.page;
-        const nb = AppManager.notebooks.find(n => n.id === AppManager.activeNotebookId);
+        const nb = this.getAppNotebooks().find(n => n.id === this.getActiveNotebookId());
         if(!nb) return;
         const page = nb.pages.find(p => p.id === pageId);
         if(!page || !page.media) return;
         page.media = page.media.filter(m => m.id !== mediaId);
-        DatabaseManager.saveNotebooks(AppManager.notebooks);
+        DatabaseManager.saveNotebooks(this.getAppNotebooks());
     }
 
     showTextFormattingMenu(textWrapper, mediaData) {
@@ -825,16 +824,16 @@ export class DrawingPad {
     }
 
     updateMediaData(mediaId, updates) {
-        if (!AppManager.activeNotebookId || !this.activeCanvas) return;
+        if (!this.getActiveNotebookId() || !this.activeCanvas) return;
         const pageId = this.activeCanvas.dataset.page;
-        const nb = AppManager.notebooks.find(n => n.id === AppManager.activeNotebookId);
+        const nb = this.getAppNotebooks().find(n => n.id === this.getActiveNotebookId());
         if(!nb) return;
         const page = nb.pages.find(p => p.id === pageId);
         if(!page || !page.media) return;
         const media = page.media.find(m => m.id === mediaId);
         if(media) {
             Object.assign(media, updates);
-            DatabaseManager.saveNotebooks(AppManager.notebooks);
+            DatabaseManager.saveNotebooks(this.getAppNotebooks());
         }
     }
 
@@ -873,7 +872,7 @@ export class DrawingPad {
         let cColor = this.color;
 
         const pageId = canvas.dataset.page;
-        const notebookId = AppManager.activeNotebookId;
+        const notebookId = this.getActiveNotebookId();
 
         this.currentStroke = {
             mode: this.currentMode,
@@ -1022,7 +1021,7 @@ export class DrawingPad {
             const pageId = this.currentStroke.pageId;
             DatabaseManager.syncDrawings(notebookId, pageId, this.globalHistory);
             
-            if(typeof AppManager !== 'undefined') AppManager.renderSidebar();
+            if(this.onRenderSidebar) this.onRenderSidebar();
         }
         this.currentStroke = null;
     }
