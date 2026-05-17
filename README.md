@@ -1,6 +1,6 @@
-content = """# 📓 Pro Planner - Dijital Günlük ve Akıllı Ajanda
+content = """# 📓 Dijital Günlük ve Akıllı Ajanda
 
-Selam! Ben **AYŞE NUR ŞEKERLİ**, Pamukkale Üniversitesi Yönetim Bilişim Sistemleri (YBS) öğrencisiyim. Bu proje benim hem yazılım öğrenme sürecimin hem de dönem ödevimin bir parçası. 
+Ben **AYŞE NUR ŞEKERLİ**, Pamukkale Üniversitesi Yönetim Bilişim Sistemleri (YBS) öğrencisiyim. Bu proje benim hem yazılım öğrenme sürecimin hem de dönem ödevimin bir parçası. 
 
 ---
 
@@ -47,3 +47,29 @@ Selam! Ben **AYŞE NUR ŞEKERLİ**, Pamukkale Üniversitesi Yönetim Bilişim Si
 
 ---
 
+## 🚀 Kurulum ve Kullanım
+
+Proje **ES6 Modülleri (`export` / `import`)** mimarisi kullanılarak Clean Code prensiplerine uygun olarak refactor edilmiştir. Bu nedenle projeyi düz HTML dosyasına çift tıklayarak çalıştıramazsınız (Tarayıcı CORS güvenlik kısıtlamaları).
+
+**Çalıştırma Adımları:**
+1. Bilgisayarınızda **Node.js** yüklü olmalıdır.
+2. Terminal (Komut İstemi) açıp proje klasörüne gidin.
+3. Herhangi bir yerel HTTP Sunucusu başlatın. Örneğin:
+   * **VS Code** kullanıyorsanız: `Live Server` eklentisini kurup `index.html`'e sağ tıklayıp "Open with Live Server" diyebilirsiniz.
+   * **Python** ile: Terminale `python -m http.server` yazın.
+   * **Node.js** ile: Terminale `npx serve` veya `npx http-server` yazın.
+4. Tarayıcınızdan `http://localhost:8000` (veya sunucunun verdiği porta) giderek uygulamayı kullanmaya başlayabilirsiniz.
+
+---
+
+## 🧪 Çıktı Kontrol Metodolojisi (Testler)
+
+Projeye kod güvenilirliğini artırmak için **Birim Testleri (Unit Tests)** entegre edilmiştir. Uygulamanın IndexedDB'ye kayıt atma, doğru veri yapısı oluşturma (UUID temelli ID atama vb.) fonksiyonlarının sağlamlığı doğrulanmıştır.
+
+**Testleri Çalıştırmak İçin:**
+1. Proje dizininde terminali açın.
+2. Bağımlılık sorunu yaşamadan yerleşik test aracını çalıştırmak için aşağıdaki komutu girin:
+   ```bash
+   node --test __tests__/temel.test.js
+   ```
+3. Tüm testlerin "Geçti" (Pass) ibaresiyle sonuçlandığını konsoldan teyit edebilirsiniz. Veritabanı ve Arayüz mock (simülasyon) testleri başarıyla tamamlanmıştır.

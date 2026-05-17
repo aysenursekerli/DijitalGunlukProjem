@@ -1,0 +1,21 @@
+{
+  "name": "dijital-ajanda",
+  "version": "1.0.0",
+  "description": "content = \"\"\"# 📓Dijital Günlük ve Akıllı Ajanda",
+  "main": "Arayuz.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/aysenursekerli/dijital-g-nl-k-projem.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/aysenursekerli/dijital-g-nl-k-projem/issues"
+  },
+  "homepage": "https://github.com/aysenursekerli/dijital-g-nl-k-projem#readme"
+}
