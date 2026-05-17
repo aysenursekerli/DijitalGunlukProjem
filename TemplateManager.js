@@ -1,7 +1,17 @@
+/**
+ * TemplateManager modülü: Ajanda sayfalarına (örneğin; kalori takibi, spor günlüğü, bütçe) 
+ * ait özel HTML yapılarını oluşturur. Spagetti kod oluşmasını engellemek için Arayuz.js'den ayrılmıştır.
+ *
+ * @param {string} pattern - Sayfanın şablon tipi (örn: 'template-kalori', 'template-spor')
+ * @param {string} bgImage - Sayfanın arka plan resmi (eğer varsa)
+ * @returns {string} - İlgili şablonun HTML kod bloğu (string olarak)
+ */
 export function generateTemplateContent(pattern, bgImage) {
-    let templateHTML = '';
-    
+    let templateHTML = ''; // Şablonun HTML kodunu tutacak değişken
+
+    // Hangi şablonun seçildiğine göre ilgili HTML yapısını oluştur
     if (pattern === 'template-kalori') {
+        // Kalori Takibi Şablonu: Günlük öğünlerin (kahvaltı, öğle vb.) kalori hesaplarını tutar
         templateHTML = `
             <div class="template-tracker kalori-tracker" style="position:relative; z-index:10; padding:16px; border-radius:16px;">
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:2px solid rgba(255,140,66,0.3);">
@@ -41,6 +51,7 @@ export function generateTemplateContent(pattern, bgImage) {
             </div>
         `;
     } else if (pattern === 'template-spor') {
+        // Spor Günlüğü Şablonu: Yapılan egzersiz sürelerini ve mesafeleri tutar
         templateHTML = `
             <div class="template-tracker spor-tracker" style="position:relative; z-index:10; padding:16px; border-radius:16px;">
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:2px solid rgba(0,102,204,0.25);">
@@ -80,6 +91,7 @@ export function generateTemplateContent(pattern, bgImage) {
             </div>
         `;
     } else if (pattern === 'template-butce') {
+        // Bütçe Takibi Şablonu: Aylık gelir ve giderleri listeleyen tasarım
         templateHTML = `
             <div class="template-tracker butce-tracker" style="position:relative; z-index:10; padding:16px; border-radius:16px;">
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px; padding-bottom:10px; border-bottom:2px solid rgba(56,142,60,0.25);">
@@ -111,6 +123,7 @@ export function generateTemplateContent(pattern, bgImage) {
             </div>
         `;
     } else if (pattern === 'template-duygu') {
+        // Duygu Takibi Şablonu: Kullanıcının günlük modunu ve minnettar olduğu şeyleri yazar
         templateHTML = `
             <div class="template-tracker duygu-tracker" style="position:relative; z-index:10; padding:16px; border-radius:16px; max-height:62%; overflow:hidden; background:rgba(255,255,255,0.6); backdrop-filter:blur(8px);">
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-bottom:10px; border-bottom:2px solid rgba(156,39,176,0.2);">
@@ -158,6 +171,7 @@ export function generateTemplateContent(pattern, bgImage) {
             </div>
         `;
     } else if (pattern === 'template-okuma') {
+        // Okuma Listesi Şablonu: Kitap isimleri ve okunma durumlarını barındırır
         templateHTML = `
             <div class="template-tracker okuma-tracker" style="position:relative; z-index:10; padding:16px; border-radius:16px; max-height:62%; overflow:hidden; background:rgba(255,255,255,0.65); backdrop-filter:blur(8px);">
                 <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px; padding-bottom:10px; border-bottom:2px solid rgba(245,124,0,0.25);">
@@ -194,5 +208,6 @@ export function generateTemplateContent(pattern, bgImage) {
         `;
     }
     
+    // Oluşturulan HTML şablon metnini geri döndür
     return templateHTML;
 }

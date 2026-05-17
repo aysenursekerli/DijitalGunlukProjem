@@ -26,6 +26,12 @@ Ben **AYŞE NUR ŞEKERLİ**, Pamukkale Üniversitesi Yönetim Bilişim Sistemler
 * **Akıllı Zoom:** Yazı yazmaya başladığımda sayfa bana otomatik olarak yaklaşıyor (zoom yapıyor), bitince pürüzsüzce geri uzaklaşıyor.
 * **Gizli Kasa (PIN Kilit Sistemi):** Özel defterlerime 4 haneli şifre koyabiliyorum. Şifreyi bilmeyen içindeki sayfaları göremiyor!
 * **Kusursuz Veri Kaydı (PageId):** Sayfaları sıra numarasıyla değil, onlara özel gizli kimliklerle (UUID) cihaz hafızasına (IndexedDB) kaydediyorum. Böylece aradan sayfa silsem bile çizimler ve eklediğim şekiller asla birbirine karışmıyor.
+### 5. PWA (Kurulabilir Web Uygulaması) ve Çevrimdışı Destek
+* **Masaüstü ve Mobil Kurulum:** Uygulamayı bir web sitesinden öte, tarayıcı üzerinden bilgisayarınıza veya tabletinize doğrudan bir masaüstü/mobil programmış gibi kurabilirsiniz.
+* **Service Worker:** Çevrimdışı (internetsiz) olsanız bile uygulamanın arayüzü ve verileriniz cihazda (IndexedDB) yerel olarak tutulduğu için sorunsuz kullanmaya devam edebilirsiniz.
+
+### 🚀 Gelecek Vizyonu (Future Scope)
+* **Native Mobil Dönüşüm:** Bu projenin modüler mimarisi ve yerel veri yapısı, ilerleyen süreçlerde **Flutter** veya **React Native** gibi teknolojilerle doğrudan iOS ve Android cihazlara uyumlu yerel (native) bir mobil uygulamaya taşınmasına zemin hazırlamaktadır.
 
 ---
 

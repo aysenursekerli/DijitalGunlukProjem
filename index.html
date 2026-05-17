@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="tr">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Dijital Ajada - Notlarını, çizimlerini ve anılarını sakla">
+    <meta name="theme-color" content="#1e293b">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="assets/icons/icon.svg">
     <title>Dijital Ajada</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -14,9 +16,7 @@
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-
 <body>
-    <!-- ==================== SPLASH SCREEN ==================== -->
     <div id="splash-screen" class="splash-screen">
         <div class="splash-logo">
             <i data-lucide="book-open" class="splash-icon"></i>
@@ -24,8 +24,6 @@
         <h1 class="splash-title">Dijital Ajada</h1>
         <p class="splash-subtitle">Anılarını dijital dünyaya taşı</p>
     </div>
-
-    <!-- ==================== NOTEBOOK CREATION MODAL ==================== -->
     <div id="notebook-modal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -55,21 +53,15 @@
             </div>
         </div>
     </div>
-
-    <!-- Geçiçleri yumuşak yöneten Ana Uygulama Sarıcısı -->
     <div id="app">
-
-        <!-- ==================== AŞAMA 1: KÜTÜPHANE ==================== -->
         <div id="view-library" class="view-layer active">
             <div class="library-container">
                 <h1 class="library-title">Kütüphanem</h1>
                 <div class="library-grid">
-                    <!-- Yeni Ekle Kartı -->
                     <div class="book-card add-new" id="add-new-btn">
                         <span class="plus-icon"><i data-lucide="plus-circle"></i></span>
                         <p>Yeni Günlük Ekle</p>
                     </div>
-                    <!-- Örnek Günlük Kartı -->
                     <div class="book-card" id="open-sample-book">
                         <div class="book-cover-design">
                             <h3 class="book-title">Dijital Ajanda</h3>
@@ -79,8 +71,6 @@
                 </div>
             </div>
         </div>
-
-        <!-- ==================== AŞAMA 2: DEFTER ÖN İZLEME (KİTAP MODU) ==================== -->
         <div id="view-preview" class="view-layer">
             <div class="preview-header">
                 <button class="nav-btn" id="btn-return-library"><i data-lucide="chevron-left"></i> Kütüphaneye
@@ -88,29 +78,21 @@
                 <button class="nav-btn primary-btn" id="btn-add-page" style="margin-left: 15px;"><i
                         data-lucide="file-plus"></i> Yeni Sayfa Ekle</button>
             </div>
-
             <div class="container" id="main-container">
-                <!-- Book content will be dynamically injected here by JS -->
             </div>
         </div>
-
-        <!-- ==================== AŞAMA 3: TEK SAYFA DÜZENLEME (EDİT MODU) ==================== -->
         <div id="view-edit" class="view-layer">
-
-            <!-- Yan Panel (Sidebar Navigator) -->
             <div class="sidebar-navigator" id="sidebar-navigator">
                 <div class="sidebar-header">
                     <h3>Sayfalar</h3>
                 </div>
                 <div class="thumbnails-container" id="thumbnails-container">
-                    <!-- JS ile doldurulacak -->
                 </div>
                 <div class="sidebar-footer">
                     <button class="nav-btn primary-btn add-page-sidebar-btn" id="sidebar-add-page-btn"><i
                             data-lucide="plus"></i> Yeni Sayfa</button>
                 </div>
             </div>
-
             <div class="main-edit-area">
                 <div class="edit-header">
                     <div style="display:flex; align-items:center; gap:10px;">
@@ -119,8 +101,6 @@
                         <button class="nav-btn primary-btn" id="btn-finish-edit"><i data-lucide="save"></i>
                             Kaydet</button>
                     </div>
-
-                    <!-- Taşınan Araç Çubuğu -->
                     <div class="toolbar" id="toolbar">
                         <button class="tool-btn active" data-tool="hand" title="El (Sayfa Kaydırma)"><i
                                 data-lucide="hand"></i></button>
@@ -152,7 +132,6 @@
                         </div>
                         <div class="tool-separator"></div>
                         <button class="tool-btn" id="undo-btn" title="Geri Al"><i data-lucide="undo-2"></i></button>
-
                         <div class="tool-separator"></div>
                         <div class="tool-separator"></div>
                         <div class="media-group" id="media-toolbar">
@@ -173,7 +152,6 @@
                             <button class="tool-btn" id="btn-upload-trigger" title="Fotoğraf Yükle"><i
                                     data-lucide="image"></i></button>
                             <input type="file" id="image-upload" accept="image/*" style="display: none;">
-
                             <div class="dropdown" id="emoji-dropdown">
                                 <button class="tool-btn" title="Emoji Ekle"><i data-lucide="smile"></i></button>
                                 <div class="dropdown-content emoji-grid">
@@ -195,7 +173,6 @@
                                     <div class="sticker-btn" data-sticker="🔍">🔍</div>
                                 </div>
                             </div>
-
                             <button class="tool-btn" id="sticker-popup-btn" title="Sticker Ekle"><i
                                     data-lucide="sticker"></i></button>
                         </div>
@@ -203,26 +180,19 @@
                                 data-lucide="trash-2"></i></button>
                     </div>
                 </div>
-
-                <!-- Çizerken Zoom ve Pan İşlemlerinin Yapılacağı Tek Sayfa Alanı -->
                 <div class="edit-workspace" id="edit-workspace">
                     <button class="nav-arrow-btn left-arrow" id="btn-prev-edit-page" title="Önceki Sayfa"><i
                             data-lucide="chevron-left"></i></button>
                     <div class="zoom-wrapper" id="zoom-wrapper">
                         <div class="fullscreen-canvas-wrapper" id="edit-page-slot">
-                            <!-- Tıklanan sayfanın "canvas" ve "içeriği" geçici olarak buraya teleport edilecek -->
                         </div>
                     </div>
                     <button class="nav-arrow-btn right-arrow" id="btn-next-edit-page" title="Sonraki Sayfa"><i
                             data-lucide="chevron-right"></i></button>
                 </div>
-
-            </div> <!-- main-edit-area BİTİŞ -->
-
+            </div> 
         </div>
     </div>
-
-    <!-- ==================== RENAME MODAL ==================== -->
     <div id="rename-modal" class="modal">
         <div class="modal-content rename-modal-content">
             <div class="modal-header">
@@ -241,8 +211,6 @@
             </div>
         </div>
     </div>
-
-    <!-- ==================== PIN MODAL ==================== -->
     <div id="pin-modal" class="modal">
         <div class="modal-content pin-modal-content" style="max-width: 300px; text-align: center;">
             <div class="modal-header" style="justify-content: center;">
@@ -258,8 +226,6 @@
             </div>
         </div>
     </div>
-
-    <!-- ==================== STICKER MODAL ==================== -->
     <div id="sticker-modal" class="modal">
         <div class="modal-content sticker-modal-content">
             <div class="modal-header">
@@ -273,13 +239,10 @@
                     <button class="tab-btn" data-sticker-tab="school">Okul</button>
                 </div>
                 <div class="sticker-grid" id="sticker-library-grid">
-                    <!-- JS ile doldurulacak -->
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- ==================== TEMPLATE MODAL ==================== -->
     <div id="template-modal" class="modal">
         <div class="modal-content" style="max-width: 1200px; width: 95%;">
             <div class="modal-header">
@@ -288,13 +251,10 @@
             </div>
             <div class="modal-body">
                 <div class="template-grid" id="template-grid">
-                    <!-- JS ile doldurulacak -->
                 </div>
             </div>
         </div>
     </div>
-
-    <!-- ==================== TEXT FORMATTING TOOLBAR (POPUP) ==================== -->
     <div id="text-formatting-menu" class="text-formatting-menu">
         <div class="text-format-group">
             <label>Font Stili:</label>
@@ -305,7 +265,6 @@
                 <option value="'Courier New'">Monospace</option>
             </select>
         </div>
-        
         <div class="text-format-group">
             <label>Hizalama:</label>
             <div class="text-align-buttons">
@@ -314,28 +273,29 @@
                 <button class="text-align-btn" data-align="right" title="Sağa Hizala"><i data-lucide="align-right"></i></button>
             </div>
         </div>
-        
         <div class="text-format-group">
             <label>Renk:</label>
             <div class="text-color-wrapper">
                 <input type="color" id="text-color-picker" value="#333333" class="text-color-picker">
             </div>
         </div>
-
         <div class="text-format-group">
             <button class="text-format-close-btn" id="close-text-formatting">&times;</button>
         </div>
     </div>
-
-    <!-- Kütüphaneler -->
     <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js"></script>
     <script type="module" src="Arayuz.js"></script>
     <script>
-        // Lucide ikonlarını başlat
         document.addEventListener('DOMContentLoaded', () => {
             if (typeof lucide !== 'undefined') lucide.createIcons();
         });
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(registration => console.log('SW registered:', registration))
+                    .catch(error => console.log('SW registration failed:', error));
+            });
+        }
     </script>
 </body>
-
 </html>

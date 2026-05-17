@@ -1,12 +1,17 @@
 import { DatabaseManager } from './Veritabani.js';
 import { DrawingPad } from './CanvasMotoru.js';
 import { generateTemplateContent } from './TemplateManager.js';
-
+/**
+ * AppManager (Uygulama Yöneticisi): Projenin kalbidir.
+ * 3 farklı aşamayı (Phase) yönetir:
+ * 1. Kütüphane (Defterlerin listelendiği ana sayfa)
+ * 2. Önizleme (Defterin kapağının açılıp sayfaların çevrildiği görünüm)
+ * 3. Düzenleme (Sayfaya çizim yapılan, sticker/yazı eklenen tam ekran mod)
+ */
 export const AppManager = {
-    currentPhase: 1, // 1: Library, 2: Preview, 3: Edit
+    currentPhase: 1, 
     views: {},
     activePageData: null,
-    
     notebooks: [
         {
             id: 'nb-sample-1',
@@ -22,24 +27,25 @@ export const AppManager = {
         }
     ],
     activeNotebookId: null,
+    activeNotebookId: null, // O an açık olan defterin ID'sini tutar
 
+    /**
+     * Uygulamanın Başlangıç (Init) Fonksiyonu.
+     * Sayfa ilk açıldığında çalışır. Veritabanına bağlanır, kayıtlı defterleri çeker
+     * ve butonların (Yeni Ekle, Çıkış vs.) tıklanma olaylarını (event) dinlemeye başlar.
+     */
     init() {
         this.views = {
             1: document.getElementById('view-library'),
             2: document.getElementById('view-preview'),
             3: document.getElementById('view-edit')
         };
-
-        // Veritabanını başlat ve verileri yükle
         DatabaseManager.init().then(async () => {
             const savedNotebooks = await DatabaseManager.loadNotebooks();
             if (savedNotebooks && savedNotebooks.length > 0) {
                 this.notebooks = savedNotebooks;
             }
-            
             this.renderLibrary();
-            
-            // çizimleri yükle ve globalHistory'ye ekle
             if (window.drawingPad) {
                 const savedDrawings = await DatabaseManager.loadDrawings();
                 window.drawingPad.globalHistory = savedDrawings || [];
@@ -48,8 +54,6 @@ export const AppManager = {
             console.error('Database initialization failed:', err);
             this.renderLibrary();
         });
-
-        // Kütüphane Eventleri - Yeni Ekle Modal
         const modal = document.getElementById('notebook-modal');
         document.getElementById('add-new-btn').addEventListener('click', () => {
             modal.classList.add('active');
@@ -61,37 +65,27 @@ export const AppManager = {
             this.createNewNotebook();
             modal.classList.remove('active');
         });
-
-        // Template Modal Eventleri
         document.getElementById('close-template-btn').addEventListener('click', () => {
             document.getElementById('template-modal').classList.remove('active');
         });
-
-        // Aşama 2 Eventleri
         document.getElementById('btn-return-library').addEventListener('click', () => {
             this.switchPhase(1);
         });
-        
         document.getElementById('btn-add-page').addEventListener('click', () => {
             this.openTemplateModal();
         });
-
-        // Aşama 3 Eventleri
         document.getElementById('btn-finish-edit').addEventListener('click', () => {
             this.closeEditMode();
             this.switchPhase(1);
         });
         document.getElementById('btn-prev-edit-page').addEventListener('click', () => this.navigateToPage(-1));
         document.getElementById('btn-next-edit-page').addEventListener('click', () => this.navigateToPage(1));
-        
         window.addEventListener('keydown', (e) => {
             if(this.currentPhase === 3 && window.drawingPad && window.drawingPad.currentMode === 'hand') {
                 if(e.key === 'ArrowLeft') this.navigateToPage(-1);
                 if(e.key === 'ArrowRight') this.navigateToPage(1);
             }
         });
-
-        // Yan Panel Eventleri
         const sidebar = document.getElementById('sidebar-navigator');
         const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
         if(toggleSidebarBtn && sidebar) {
@@ -99,15 +93,12 @@ export const AppManager = {
                 sidebar.classList.toggle('collapsed');
             });
         }
-        
         const sidebarAddPageBtn = document.getElementById('sidebar-add-page-btn');
         if(sidebarAddPageBtn) {
             sidebarAddPageBtn.addEventListener('click', () => {
                 this.openTemplateModal();
             });
         }
-
-        // Splash screen timeout
         setTimeout(() => {
             const splash = document.getElementById('splash-screen');
             if(splash) {
@@ -117,18 +108,20 @@ export const AppManager = {
         }, 1500);
     },
 
+    /**
+     * Aşama 1: Kütüphane Ekranı.
+     * Veritabanından çekilen defterleri (notebooks dizisini) ekrandaki ızgaraya (grid) yerleştirir.
+     * Her defterin kendi rengi, adı ve kilit durumu burada oluşturulur.
+     */
     renderLibrary() {
         const grid = document.querySelector('.library-grid');
         const addNewBtn = document.getElementById('add-new-btn');
         grid.innerHTML = '';
         grid.appendChild(addNewBtn);
-
         this.notebooks.forEach(nb => {
             const card = document.createElement('div');
             card.className = 'book-card';
-            
             let lockHtml = nb.isLocked ? `<i data-lucide="lock" class="book-lock-icon"></i>` : '';
-            
             card.innerHTML = `
                 <div class="book-cover-design" style="background: ${nb.coverColor}; position: relative;">
                     ${lockHtml}
@@ -143,12 +136,10 @@ export const AppManager = {
                     <div class="book-date">Nisan 2026</div>
                 </div>
             `;
-            
             card.addEventListener('click', (e) => {
                 if (e.target.closest('.book-settings') || e.target.closest('.book-settings-menu')) return;
                 this.handleBookClick(nb);
             });
-
             const settingsBtn = card.querySelector('.book-settings');
             const settingsMenu = card.querySelector('.book-settings-menu');
             settingsBtn.addEventListener('click', (e) => {
@@ -158,48 +149,45 @@ export const AppManager = {
                 });
                 settingsMenu.classList.toggle('active');
             });
-
             const togglePinBtn = card.querySelector('.toggle-pin-btn');
             togglePinBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 settingsMenu.classList.remove('active');
                 this.openPinSetupModal(nb);
             });
-
             const renameBtn = card.querySelector('.rename-nb-btn');
             renameBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 settingsMenu.classList.remove('active');
                 this.openRenameModal(nb);
             });
-
             grid.appendChild(card);
         });
-
         document.addEventListener('click', () => {
             document.querySelectorAll('.book-settings-menu.active').forEach(m => m.classList.remove('active'));
         });
         if (typeof lucide !== 'undefined') lucide.createIcons();
     },
 
+    /**
+     * Defterin ismini değiştirmek için açılan küçük kutucuğu (Modal) yönetir.
+     * @param {Object} nb - İsmi değiştirilecek defter objesi
+     */
     openRenameModal(nb) {
         const modal = document.getElementById('rename-modal');
         const input = document.getElementById('rename-input');
         const btnConfirm = document.getElementById('btn-confirm-rename');
         const btnCancel = document.getElementById('btn-cancel-rename');
         const btnClose = document.getElementById('close-rename-btn');
-
         input.value = nb.name;
         modal.classList.add('active');
         setTimeout(() => { input.focus(); input.select(); }, 80);
-
         const cleanup = () => {
             modal.classList.remove('active');
             btnConfirm.replaceWith(btnConfirm.cloneNode(true));
             btnCancel.replaceWith(btnCancel.cloneNode(true));
             btnClose.replaceWith(btnClose.cloneNode(true));
         };
-
         const confirm = () => {
             const val = input.value.trim();
             if (val.length > 0) {
@@ -209,7 +197,6 @@ export const AppManager = {
             }
             cleanup();
         };
-
         document.getElementById('btn-confirm-rename').addEventListener('click', confirm);
         document.getElementById('btn-cancel-rename').addEventListener('click', cleanup);
         document.getElementById('close-rename-btn').addEventListener('click', cleanup);
@@ -219,16 +206,19 @@ export const AppManager = {
         });
     },
 
+    /**
+     * "Yeni Günlük Ekle" butonuna basıldığında çağrılır.
+     * UUID standardında (benzersiz şifreli) yeni bir ID üretir,
+     * defteri oluşturur ve veritabanına kaydeder.
+     */
     createNewNotebook() {
         const name = document.getElementById('notebook-name').value || 'Yeni Günlük';
         const color = document.getElementById('notebook-color').value;
         const pattern = document.getElementById('notebook-pattern').value;
-
         const pages = [];
         for(let i = 1; i <= 2; i++) {
             pages.push({ id: 'pg-' + crypto.randomUUID(), snapshot: null });
         }
-
         const newNb = {
             id: 'nb-' + crypto.randomUUID(),
             name: name,
@@ -242,7 +232,10 @@ export const AppManager = {
         DatabaseManager.saveNotebooks(this.notebooks);
         this.renderLibrary();
     },
-
+    /**
+     * Defterin üzerine tıklandığında kilitliyse şifre sorar, açıksa doğrudan defteri okuma modunda (Aşama 2) açar.
+     * @param {Object} nb - Tıklanan defter objesi
+     */
     handleBookClick(nb) {
         if(nb.isLocked && nb.pinCode) {
             this.openPinEntryModal(nb);
@@ -251,30 +244,30 @@ export const AppManager = {
         }
     },
 
+    /**
+     * Deftere ilk kez kilit koyarken veya mevcut kilidi kaldırırken açılan ekranı yönetir.
+     * @param {Object} nb - Şifrelenecek defter
+     */
     openPinSetupModal(nb) {
         const modal = document.getElementById('pin-modal');
         const title = document.getElementById('pin-modal-title');
         const input = document.getElementById('pin-input');
         const btnSubmit = document.getElementById('btn-submit-pin');
         const btnCancel = document.getElementById('btn-cancel-pin');
-
         modal.classList.add('active');
         input.value = '';
         input.focus();
-
         if (nb.isLocked) {
             title.innerText = 'Mevcut PIN\'i Girin (Kaldırmak için)';
         } else {
             title.innerText = 'Yeni PIN Belirleyin';
         }
-
         const cleanup = () => {
             modal.classList.remove('active');
             btnSubmit.replaceWith(btnSubmit.cloneNode(true));
             btnCancel.replaceWith(btnCancel.cloneNode(true));
             input.classList.remove('shake');
         };
-
         const handleSubmit = () => {
             const val = input.value.trim();
             if(val.length !== 4 || isNaN(val)) {
@@ -282,7 +275,6 @@ export const AppManager = {
                 setTimeout(() => input.classList.remove('shake'), 300);
                 return;
             }
-
             if(nb.isLocked) {
                 if(val === nb.pinCode) {
                     nb.isLocked = false;
@@ -303,30 +295,30 @@ export const AppManager = {
                 cleanup();
             }
         };
-
         document.getElementById('btn-submit-pin').addEventListener('click', handleSubmit);
         document.getElementById('btn-cancel-pin').addEventListener('click', cleanup);
     },
-
+    /**
+     * Kilitli bir deftere girerken şifre (PIN) sorulan ekranı yönetir.
+     * Girilen PIN doğruysa defteri açar, yanlışsa kutucuğu sallar (shake efekti).
+     * @param {Object} nb - Açılmak istenen kilitli defter
+     */
     openPinEntryModal(nb) {
         const modal = document.getElementById('pin-modal');
         const title = document.getElementById('pin-modal-title');
         const input = document.getElementById('pin-input');
         const btnSubmit = document.getElementById('btn-submit-pin');
         const btnCancel = document.getElementById('btn-cancel-pin');
-
         modal.classList.add('active');
         input.value = '';
         input.focus();
         title.innerText = 'PIN Girin';
-
         const cleanup = () => {
             modal.classList.remove('active');
             btnSubmit.replaceWith(btnSubmit.cloneNode(true));
             btnCancel.replaceWith(btnCancel.cloneNode(true));
             input.classList.remove('shake');
         };
-
         const handleSubmit = () => {
             const val = input.value.trim();
             if(val === nb.pinCode) {
@@ -338,23 +330,26 @@ export const AppManager = {
                 setTimeout(() => input.classList.remove('shake'), 300);
             }
         };
-
         document.getElementById('btn-submit-pin').addEventListener('click', handleSubmit);
         document.getElementById('btn-cancel-pin').addEventListener('click', cleanup);
     },
-
+    /**
+     * Aşama 2: Önizleme (Preview) Modu.
+     * Seçilen defterin kapağını ve içindeki sayfaları (çizimler ve stickerlarla birlikte)
+     * HTML dom elemanları olarak oluşturup, "PageFlip" kütüphanesiyle gerçek bir defter gibi çevrilebilir hale getirir.
+     * 
+     * @param {string} id - Açılacak defterin ID'si
+     * @param {number} startPage - Hangi sayfanın açık geleceği (varsayılan: 0, yani kapak)
+     */
     openBook(id, startPage = 0) {
         this.activeNotebookId = id;
         const nb = this.notebooks.find(n => n.id === id);
         if(!nb) return;
-
         const container = document.getElementById('main-container');
         container.innerHTML = ''; 
-        
         const bookDiv = document.createElement('div');
         bookDiv.className = 'book';
         bookDiv.id = 'book';
-        
         bookDiv.innerHTML += `
             <div class="page page-cover page-cover-top" data-density="hard">
                 <div class="page-content" style="background: ${nb.coverColor}">
@@ -362,7 +357,6 @@ export const AppManager = {
                 </div>
             </div>
         `;
-
         nb.pages.forEach((pageObj, index) => {
             let mediaHTML = '';
             if(pageObj.media && pageObj.media.length > 0) {
@@ -382,22 +376,17 @@ export const AppManager = {
                     }
                     else if (m.type === 'sticker') inner = `<div class="media-content"><div class="sticker" style="font-size: ${m.width/20}rem;">${m.content}</div></div>`;
                     else if (m.type === 'image') inner = `<div class="media-content"><img src="${m.content}"></div>`;
-
                     mediaHTML += `<div class="static-media" style="position:absolute; left:${m.x}px; top:${m.y}px; width:${m.width}px; height:${m.height}px; transform:rotate(${m.rotation || 0}deg); z-index:${m.zIndex}; pointer-events:none;">${inner}</div>`;
                 });
             }
-
-            // Template içeriğini ekle
             let templateContent = '';
             if (pageObj.pattern && pageObj.pattern.startsWith('template-')) {
                 templateContent = generateTemplateContent(pageObj.pattern, pageObj.bgImage);
             }
-
             let bgStyle = '';
             if (pageObj.bgImage) {
                 bgStyle = `style="background-image: url('${pageObj.bgImage}'); background-size: cover; background-position: center;"`;
             }
-
             bookDiv.innerHTML += `
                 <div class="page pattern-${pageObj.pattern || nb.pattern}" data-page="${pageObj.id}">
                     <div class="page-content" ${bgStyle}>
@@ -410,7 +399,6 @@ export const AppManager = {
                 </div>
             `;
         });
-
         let totalPages = nb.pages.length + 2;
         let dummyPageHtml = '';
         if (totalPages % 2 !== 0) {
@@ -422,7 +410,6 @@ export const AppManager = {
                 </div>
             `;
         }
-
         bookDiv.innerHTML += dummyPageHtml + `
             <div class="page page-cover page-cover-bottom" data-density="hard">
                 <div class="page-content" style="background: ${nb.coverColor}">
@@ -430,27 +417,20 @@ export const AppManager = {
                 </div>
             </div>
         `;
-
         container.appendChild(bookDiv);
-
         this.bindPageEvents(bookDiv);
-
         if(window.pageFlip) {
             window.pageFlip.destroy();
         }
-        
         window.pageFlip = new St.PageFlip(bookDiv, {
             width: 450, height: 600, size: "stretch", 
             minWidth: 300, maxWidth: 600, minHeight: 400, maxHeight: 800,
             maxShadowOpacity: 0.5, showCover: true, mobileScrollSupport: true 
         });
         window.pageFlip.loadFromHTML(bookDiv.querySelectorAll(".page"));
-        
         if (startPage > 0 && typeof window.pageFlip.turnToPage === 'function') {
             window.pageFlip.turnToPage(startPage);
         }
-
-        // Tüm canvas'ları re-render et
         requestAnimationFrame(() => {
             setTimeout(() => {
                 if (window.drawingPad) {
@@ -461,11 +441,8 @@ export const AppManager = {
                 }
             }, 150);
         });
-
-        // onFlip event'i: sayfa çevrildiğinde ekranda görünen canvas'ları redraw et
         if (window.pageFlip) {
             window.pageFlip.on('flip', (data) => {
-                // Aktif (ekranda görünen) sayfaları al ve redraw et
                 setTimeout(() => {
                     if (window.drawingPad) {
                         const pages = bookDiv.querySelectorAll('.page');
@@ -480,11 +457,14 @@ export const AppManager = {
                 }, 50);
             });
         }
-
         this.switchPhase(2);
         if (typeof lucide !== 'undefined') lucide.createIcons();
     },
-
+    /**
+     * Sayfaların üzerine çift tıklandığında veya "Düzenle" butonuna basıldığında
+     * Düzenleme moduna (Aşama 3) geçilmesini sağlayan olay dinleyicilerini bağlar.
+     * @param {HTMLElement} container - Sayfaları barındıran DOM elemanı
+     */
     bindPageEvents(container) {
         const pages = container.querySelectorAll('.page:not(.page-cover)');
         pages.forEach(page => {
@@ -496,28 +476,27 @@ export const AppManager = {
             page.dataset.eventsBound = "true";
         });
     },
-
+    /**
+     * "Yeni Sayfa Ekle" butonuna basıldığında açılan Şablon Galerisini yönetir.
+     * Kullanıcı boş sayfa, kareli sayfa, alışkanlık takibi veya günlük planlayıcı gibi şablonlar seçebilir.
+     */
     openTemplateModal() {
         const modal = document.getElementById('template-modal');
         const grid = document.getElementById('template-grid');
         grid.innerHTML = '';
-        
         const createDivider = (text) => {
             const div = document.createElement('div');
             div.className = 'template-divider';
             div.innerText = text;
             grid.appendChild(div);
         };
-
         createDivider('Temel Sayfalar');
-
         const basePatterns = [
             { name: 'Boş', pattern: 'blank', bg: '#fff', desc: 'Tamamen boş, özgür yazma alanı' },
             { name: 'Noktalı', pattern: 'dotted', bg: 'radial-gradient(#cbd5e1 2px, transparent 2px)', size: '15px 15px', desc: 'Çizim ve yazma için nokta rehberi' },
             { name: 'Kareli', pattern: 'squared', bg: 'linear-gradient(#e2e8f0 1px,transparent 1px),linear-gradient(90deg,#e2e8f0 1px,transparent 1px)', size: '15px 15px', desc: 'Matematiksel işlemler için uygun' },
             { name: 'Çizgili', pattern: 'lined', bg: 'linear-gradient(transparent 95%, #e2e8f0 5%)', size: '100% 24px', desc: 'Hızlı not almak için ideal' }
         ];
-
         basePatterns.forEach(bp => {
             const item = document.createElement('div');
             item.className = 'template-item base-template-item';
@@ -534,24 +513,20 @@ export const AppManager = {
                     ${bp.desc}
                 </div>
             `;
-            
             item.addEventListener('mouseenter', () => {
                 const desc = item.querySelector('.base-template-desc');
                 if(desc) desc.style.opacity = '1';
             });
-            
             item.addEventListener('mouseleave', () => {
                 const desc = item.querySelector('.base-template-desc');
                 if(desc) desc.style.opacity = '0';
             });
-            
             item.addEventListener('click', () => {
                 modal.classList.remove('active');
                 this.addNewPageToBook('', bp.pattern);
             });
             grid.appendChild(item);
         });
-
         createDivider('Sayfalar');
         const sayfaFiles = [
             "sayfa1.jpg", "sayfa2.jpg", "sayfa3.jpg", "sayfa4.jpg", "sayfa5.jpg", "sayfa6.jpg", "sayfa7.jpg", "sayfa8.jpg", "sayfa9.jpg", "sayfa10.jpg", "sayfa11.jpg", "sayfa12.jpg", "sayfa13.jpg", "sayfa14.jpg"
@@ -566,7 +541,6 @@ export const AppManager = {
             });
             grid.appendChild(item);
         });
-
         createDivider('Günlük Planlayıcılar');
         const gunlukFiles = [
             "günlükPlanlayıcı1.jpg", "günlükPlanlayıcı2.jpg", "günlükPlanlayıcı3.jpg", "günlükPlanlayıcı4.jpg", "günkükPlanlayıcı5.jpg"
@@ -581,7 +555,6 @@ export const AppManager = {
             });
             grid.appendChild(item);
         });
-
         createDivider('Haftalık Planlayıcılar');
         const haftalikFiles = [
             "haftalıkPlanlayıcı1.jpg", "haftalıkPlanlayıcı2.jpg", "haftalıkPlanlayıcı3.jpg", "haftalıkPlanlayıcı4.jpg", "haftalıkPlanlayıcı5.jpg"
@@ -596,7 +569,6 @@ export const AppManager = {
             });
             grid.appendChild(item);
         });
-
         createDivider('Alışkanlık Takibi & Yıllık');
         const digerFiles = [
             "alışkanlıkTakibi1.jpg", "alışkanlıkTakibi2.jpg", "alışkanlıkTakibi3.jpg", "alışkanlıkTakibi4.jpg",
@@ -612,25 +584,23 @@ export const AppManager = {
             });
             grid.appendChild(item);
         });
-
         modal.classList.add('active');
     },
-
+    /**
+     * Seçilen şablonu (veya deseni) mevcut deftere yeni bir sayfa (Page) olarak ekler.
+     * @param {string} bgImage - Sayfanın arka plan resmi
+     * @param {string} pattern - Sayfanın css deseni (kareli, çizgili vb.)
+     */
     addNewPageToBook(bgImage, pattern) {
         if(!this.activeNotebookId) return;
         const nb = this.notebooks.find(n => n.id === this.activeNotebookId);
-        
         let currentIndex = 0;
         if(window.pageFlip) {
             currentIndex = window.pageFlip.getCurrentPageIndex();
         }
-
         const newPageId1 = 'pg-' + crypto.randomUUID();
         nb.pages.push({ id: newPageId1, snapshot: null, bgImage: bgImage || '', pattern: pattern || '' });
-        
-        // Notebooks'u DB'ye kaydet
         DatabaseManager.saveNotebooks(this.notebooks);
-        
         if (this.currentPhase === 3) {
             this.refreshBookStructure(newPageId1);
         } else {
@@ -640,7 +610,11 @@ export const AppManager = {
             }, 150);
         }
     },
-
+    /**
+     * Uygulamanın 3 ana ekranı (Aşama 1: Kütüphane, Aşama 2: Önizleme, Aşama 3: Düzenleme)
+     * arasındaki geçişi yönetir. İlgili HTML div'lerini gizler veya gösterir.
+     * @param {number} phase - Geçilecek aşama numarası (1, 2 veya 3)
+     */
     switchPhase(phase) {
         this.currentPhase = phase;
         Object.values(this.views).forEach(v => {
@@ -649,70 +623,62 @@ export const AppManager = {
                 v.style.pointerEvents = 'none';
             }
         });
-        
         const activeView = this.views[phase];
         if(activeView) {
             activeView.classList.add('active');
             activeView.style.pointerEvents = 'auto';
         }
-
-        // Phase 2'ye dönüşte verileri DB'ye kaydet
         if(phase === 2) {
             DatabaseManager.saveNotebooks(this.notebooks);
         }
-
         if(window.drawingPad) {
             window.drawingPad.setEditingState(phase === 3);
         }
     },
-
+    /**
+     * Aşama 3: Düzenleme Modu.
+     * Kullanıcı bir sayfaya çift tıkladığında veya "Düzenle" butonuna bastığında çağrılır.
+     * Seçilen sayfayı kopardığı gibi ekranın ortasına büyük bir şekilde yerleştirir
+     * ve Çizim Motoruna (CanvasMotoru) bağlar.
+     * @param {HTMLElement} pageElement - Düzenlenecek sayfanın DOM objesi
+     */
     openEditMode(pageElement) {
         if(this.activePageData) {
             this.closeEditMode(true); 
         }
-        
         const slot = document.getElementById('edit-page-slot');
         const pageContent = pageElement.querySelector('.page-content');
         const canvas = pageElement.querySelector('.drawing-layer');
-
         if(!pageContent || !canvas) return;
-
         this.activePageData = {
             parent: pageElement,
             content: pageContent,
             canvas: canvas
         };
-
         const editBtn = pageContent.querySelector('.edit-page-btn');
         if(editBtn) editBtn.style.display = 'none';
-
         const patternClasses = Array.from(pageElement.classList).filter(c => c.startsWith('pattern-'));
         slot.className = 'fullscreen-canvas-wrapper ' + patternClasses.join(' ');
-
         slot.appendChild(pageContent);
         slot.appendChild(canvas);
-
-        // Önce Phase 3'e geçip sayfayı ekranda görünür yap
         if(this.currentPhase !== 3) this.switchPhase(3);
-        
-        // Sayfa ekranda görünür olduktan sonra canvas boyutunu hesapla
         setTimeout(() => {
             if(window.drawingPad) {
                 window.drawingPad.attachToSinglePage(canvas, pageContent);
                 window.drawingPad.refreshAllCanvasesForZoom();
             }
         }, 10);
-
         this.renderSidebar();
     },
-
+    /**
+     * Düzenleme modundan çıkıldığında çağrılır.
+     * Ekrandaki sayfayı tekrar küçültür ve defterin içindeki eski yerine (PageFlip içine) geri koyar.
+     * @param {boolean} skipPhaseSwitch - Doğrudan kütüphaneye dönülecekse aradaki animasyon atlanır
+     */
     closeEditMode(skipPhaseSwitch = false) {
         if(this.activePageData) {
             const { parent, content, canvas } = this.activePageData;
-            
-            // Revert dynamic media to static to clean up DOM for Phase 2
             content.querySelectorAll('.transform-box').forEach(el => el.remove());
-            
             const pageId = canvas.dataset.page;
             const nb = this.notebooks.find(n => n.id === this.activeNotebookId);
             if(nb) {
@@ -734,7 +700,6 @@ export const AppManager = {
                         }
                         else if (m.type === 'sticker') inner = `<div class="media-content"><div class="sticker" style="font-size: ${m.width/20}rem;">${m.content}</div></div>`;
                         else if (m.type === 'image') inner = `<div class="media-content"><img src="${m.content}"></div>`;
-
                         const staticDiv = document.createElement('div');
                         staticDiv.className = 'static-media';
                         staticDiv.style.cssText = `position:absolute; left:${m.x}px; top:${m.y}px; width:${m.width}px; height:${m.height}px; transform:rotate(${m.rotation || 0}deg); z-index:${m.zIndex}; pointer-events:none;`;
@@ -743,42 +708,32 @@ export const AppManager = {
                     });
                 }
             }
-
             const editBtn = content.querySelector('.edit-page-btn');
             if(editBtn) editBtn.style.display = 'block';
-
             parent.appendChild(content);
             parent.appendChild(canvas);
-
             const slot = document.getElementById('edit-page-slot');
             slot.className = 'fullscreen-canvas-wrapper';
-
             if(window.drawingPad) {
                 window.drawingPad.detachSinglePage();
             }
-
             this.activePageData = null;
         }
         if(!skipPhaseSwitch) {
             this.switchPhase(2);
-            // Canvas'ı orijinal yerine taşıdıktan hemen sonra redraw et
             requestAnimationFrame(() => {
                 setTimeout(() => {
                     const book = document.getElementById('book');
                     const nb = this.notebooks.find(n => n.id === this.activeNotebookId);
                     if (book && window.drawingPad && nb) {
-                        // Tüm canvas'ları yeniden boyutlandır ve çiz
                         book.querySelectorAll('.drawing-layer').forEach(c => {
                             window.drawingPad.resizeCanvas(c);
                             window.drawingPad.redrawCanvas(c);
                         });
-                        // PageFlip'i refresh et
                         if (window.pageFlip && typeof window.pageFlip.loadFromHTML === 'function') {
                             const pages = book.querySelectorAll('.page');
                             window.pageFlip.loadFromHTML(pages);
                         }
-                        
-                        // Veritabanını senkronize et: tüm sayfalar için globalHistory'yi kaydet
                         nb.pages.forEach(pageObj => {
                             const pageDrawings = window.drawingPad.globalHistory.filter(
                                 d => d.notebookId === this.activeNotebookId && d.pageId === pageObj.id
@@ -786,52 +741,51 @@ export const AppManager = {
                             DatabaseManager.syncDrawings(this.activeNotebookId, pageObj.id, window.drawingPad.globalHistory);
                         });
                     }
-                    // Notebook bilgilerini kaydet
                     DatabaseManager.saveNotebooks(this.notebooks);
                 }, 150);
             });
         }
     },
-
+    /**
+     * Düzenleme modundayken (Aşama 3) klavyedeki sağ/sol ok tuşlarına basıldığında
+     * veya üst paneldeki ok butonlarına basıldığında bir sonraki / bir önceki sayfaya geçer.
+     * @param {number} direction - 1 (ileri) veya -1 (geri)
+     */
     navigateToPage(direction) {
         if(!this.activePageData) return;
         const currentPage = this.activePageData.parent;
         const pageId = currentPage.dataset.page;
         if(!pageId) return;
-
         const nb = this.notebooks.find(n => n.id === this.activeNotebookId);
         if(!nb) return;
-
         const currentIndex = nb.pages.findIndex(p => p.id === pageId);
         if(currentIndex === -1) return;
-
         const targetIndex = currentIndex + direction;
         if(targetIndex < 0 || targetIndex >= nb.pages.length) return;
-
         const targetPageId = nb.pages[targetIndex].id;
         const bookDiv = document.getElementById('book');
         const targetPageElement = bookDiv.querySelector(`.page[data-page="${targetPageId}"]`);
-        
         if(targetPageElement) {
             this.openEditMode(targetPageElement);
         }
     },
-
+    /**
+     * Deftere yeni sayfa eklendiğinde veya bir sayfa silindiğinde
+     * ekrandaki defterin yapısını bozmadan sayfaları yeniden hesaplayarak sayfayı yeniler.
+     * @param {string} targetPageId - Yenileme sonrası açılacak hedeflenen sayfa
+     */
     refreshBookStructure(targetPageId) {
         if (this.currentPhase === 3 && this.activePageData) {
             this.closeEditMode(true);
         }
-        
         let currentIndex = 0;
         if(window.pageFlip) {
             currentIndex = window.pageFlip.getCurrentPageIndex();
         }
-        
         this.openBook(this.activeNotebookId, currentIndex);
         if (this.currentPhase !== 3) {
             this.switchPhase(3);
         }
-        
         if(targetPageId) {
             setTimeout(() => {
                 const bookDiv = document.getElementById('book');
@@ -841,23 +795,20 @@ export const AppManager = {
                 }
             }, 100);
         }
-        
         this.renderSidebar();
     },
-
+    /**
+     * Düzenleme modundayken sol tarafta açılan Kenar Çubuğunu (Sidebar) oluşturur.
+     * Sayfaların mini versiyonlarını (thumbnail) çizer ve sayfa silme/geçiş yapma imkanı sunar.
+     */
     renderSidebar() {
         const container = document.getElementById('thumbnails-container');
         if(!container || !this.activeNotebookId) return;
-        
-        // Scroll konumunu kaydet
         const scrollTop = container.scrollTop;
-        
         container.innerHTML = '';
         const nb = this.notebooks.find(n => n.id === this.activeNotebookId);
         if(!nb) return;
-
         const activePageId = this.activePageData ? this.activePageData.parent.dataset.page : null;
-
         nb.pages.forEach((pageObj, index) => {
             const card = document.createElement('div');
             card.className = 'thumbnail-card';
@@ -865,20 +816,15 @@ export const AppManager = {
             if(pageObj.id === activePageId) {
                 card.classList.add('active');
             }
-
             let bgStyle = '';
             if (pageObj.bgImage) {
                 bgStyle = `style="background-image: url('${pageObj.bgImage}'); background-size: cover; background-position: center;"`;
             }
-
-            // Thumbnail içeriği
             card.innerHTML = `
                 <div class="thumbnail-preview pattern-${pageObj.pattern || nb.pattern}" ${bgStyle}></div>
                 <div class="thumbnail-page-num">Sayfa ${index + 1}</div>
                 <button class="delete-page-btn" title="Sayfayı Sil"><i data-lucide="trash-2"></i></button>
             `;
-
-            // Mini Canvas oluştur
             const previewDiv = card.querySelector('.thumbnail-preview');
             const miniCanvas = document.createElement('canvas');
             miniCanvas.width = 450; 
@@ -886,8 +832,6 @@ export const AppManager = {
             miniCanvas.style.width = '100%';
             miniCanvas.style.height = '100%';
             previewDiv.appendChild(miniCanvas);
-            
-            // Çizimleri yükle
             if (window.drawingPad && window.drawingPad.globalHistory) {
                 const ctx = miniCanvas.getContext('2d');
                 const strokes = window.drawingPad.globalHistory.filter(s => s.notebookId === nb.id && s.pageId === pageObj.id);
@@ -919,8 +863,6 @@ export const AppManager = {
                     ctx.globalCompositeOperation = 'source-over';
                 });
             }
-
-            // Olaylar
             card.addEventListener('click', () => {
                 if(pageObj.id !== activePageId) {
                     const bookDiv = document.getElementById('book');
@@ -928,7 +870,6 @@ export const AppManager = {
                     if(targetPageElement) this.openEditMode(targetPageElement);
                 }
             });
-
             const deleteBtn = card.querySelector('.delete-page-btn');
             deleteBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
@@ -936,26 +877,18 @@ export const AppManager = {
                     alert('Bir defterde en az 1 sayfa bulunmalıdır!');
                     return;
                 }
-                
-                // Silme işlemi
                 nb.pages.splice(index, 1);
-                
-                // DB'den çizimleri sil
                 if (window.drawingPad) {
                     window.drawingPad.globalHistory = window.drawingPad.globalHistory.filter(s => !(s.notebookId === nb.id && s.pageId === pageObj.id));
                     DatabaseManager.syncDrawings(nb.id, pageObj.id, []);
                 }
                 DatabaseManager.saveNotebooks(this.notebooks);
-                
-                // Eğer silinen sayfa şu an aktif olan sayfaysa, ilk sayfayı aç
                 let targetPageId = activePageId;
                 if(activePageId === pageObj.id) {
                     targetPageId = nb.pages[0].id;
                 }
                 this.refreshBookStructure(targetPageId);
             });
-
-            // Sürükle Bırak (Drag & Drop)
             card.addEventListener('dragstart', (e) => {
                 e.dataTransfer.setData('text/plain', index);
                 card.classList.add('dragging');
@@ -977,42 +910,26 @@ export const AppManager = {
                 const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
                 const toIndex = index;
                 if(fromIndex !== toIndex && !isNaN(fromIndex)) {
-                    // Sayfaların yerini değiştir
                     const movedPage = nb.pages.splice(fromIndex, 1)[0];
                     nb.pages.splice(toIndex, 0, movedPage);
                     DatabaseManager.saveNotebooks(this.notebooks);
                     this.refreshBookStructure(activePageId);
                 }
             });
-
             container.appendChild(card);
         });
-        
-        // Scroll konumunu geri yükle
         container.scrollTop = scrollTop;
-        
         if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 };
-
-
-// Ana Kurulum
 document.addEventListener('DOMContentLoaded', async function() {
-    // Veritabanını başlat
     await DatabaseManager.init();
-    
-    // AppManager başlat
     AppManager.init();
-
     setTimeout(async () => {
-        
         window.drawingPad = new DrawingPad();
         window.drawingPad.getAppNotebooks = () => AppManager.notebooks;
         window.drawingPad.getActiveNotebookId = () => AppManager.activeNotebookId;
         window.drawingPad.onRenderSidebar = () => AppManager.renderSidebar();
-
-        
-        // Veritabanından çizimleri yükle
         const savedDrawings = await DatabaseManager.loadDrawings();
         if (savedDrawings && savedDrawings.length > 0) {
             window.drawingPad.globalHistory = savedDrawings;
