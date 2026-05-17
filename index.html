@@ -222,6 +222,26 @@
         </div>
     </div>
 
+    <!-- ==================== RENAME MODAL ==================== -->
+    <div id="rename-modal" class="modal">
+        <div class="modal-content rename-modal-content">
+            <div class="modal-header">
+                <h2>✏️ Defter Adını Değiştir</h2>
+                <button class="close-btn" id="close-rename-btn">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 24px; gap: 16px;">
+                <div class="form-group">
+                    <label for="rename-input">Yeni Ad</label>
+                    <input type="text" id="rename-input" placeholder="Defter adı girin..." maxlength="30" autocomplete="off">
+                </div>
+                <div style="display:flex; gap:10px; margin-top:4px;">
+                    <button id="btn-cancel-rename" class="nav-btn" style="flex:1; justify-content:center;">İptal</button>
+                    <button id="btn-confirm-rename" class="nav-btn primary-btn" style="flex:1; justify-content:center;">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- ==================== PIN MODAL ==================== -->
     <div id="pin-modal" class="modal">
         <div class="modal-content pin-modal-content" style="max-width: 300px; text-align: center;">

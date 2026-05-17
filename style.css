@@ -241,7 +241,18 @@ body {
 .page-cover .page-content { justify-content:center; align-items:center; text-align:center; }
 .page-header { font-size:1.3rem; color:#334155; margin-bottom:20px; border-bottom:2px solid #f1f5f9; padding-bottom:10px; font-weight:700; }
 .page-text { flex-grow:1; color:#475569; font-size:1rem; line-height:1.7; }
-.page-footer { text-align:center; color:#94a3b8; font-size:.9rem; border-top:1px solid #f1f5f9; padding-top:12px; }
+.page-footer {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  color: rgba(100,116,139,0.7);
+  font-size: .8rem;
+  pointer-events: none;
+  z-index: 200;
+  white-space: nowrap;
+}
 
 /* CANVAS */
 .drawing-layer { position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:100; }
@@ -602,8 +613,10 @@ body {
 .shape-diamond { background-color: var(--accent); clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%); width: 100%; height: 100%; pointer-events: none; }
 
 /* Layer Controls */
-.layer-btn { background:transparent; border:1px solid var(--border); border-radius:6px; cursor:pointer; padding:4px 8px; font-size:13px; color:var(--text-muted); transition:all .2s ease; }
+.layer-btn { background:transparent; border:1px solid var(--border); border-radius:5px; cursor:pointer; padding:2px 5px; color:var(--text-muted); transition:all .2s ease; display:flex; align-items:center; justify-content:center; }
+.layer-btn svg { width:12px; height:12px; pointer-events:none; }
 .layer-btn:hover { background:rgba(124,106,247,0.15); color:var(--accent); }
+.layer-btn.delete-btn:hover { background:rgba(244,63,94,0.15); color:var(--danger); border-color:var(--danger); }
 
 /* ===== SPLASH SCREEN ===== */
 .splash-screen {
@@ -750,29 +763,27 @@ body {
 /* ===== SPECIAL TEMPLATES ===== */
 .page.pattern-template-kalori {
   background-color: transparent;
-  background: linear-gradient(135deg, #FFE5B4 0%, #FFDAB9 100%);
-  background-image: 
-    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="kaloriPattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="%23FFE5B4"/><circle cx="50" cy="30" r="15" fill="none" stroke="%23FF8C42" stroke-width="0.5" opacity="0.1"/><path d="M 50 50 Q 40 60 30 70" fill="none" stroke="%23FF8C42" stroke-width="0.5" opacity="0.08"/><path d="M 50 50 Q 60 60 70 70" fill="none" stroke="%23FF8C42" stroke-width="0.5" opacity="0.08"/><line x1="20" y1="85" x2="80" y2="85" stroke="%23FF8C42" stroke-width="0.5" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23kaloriPattern)"/></svg>'),
-    linear-gradient(to bottom, rgba(255,229,180,0.3), rgba(255,218,185,0.3));
-  background-size: 100px 100px, 100% 100%;
+  background: linear-gradient(160deg, #FFF5E6 0%, #FFE4CC 100%);
 }
 
 .page.pattern-template-spor {
   background-color: transparent;
-  background: linear-gradient(135deg, #B4E5FF 0%, #A8D8FF 100%);
-  background-image: 
-    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="sporPattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="%23B4E5FF"/><circle cx="50" cy="30" r="8" fill="none" stroke="%230066CC" stroke-width="0.5" opacity="0.1"/><path d="M 50 40 L 50 60" stroke="%230066CC" stroke-width="0.5" opacity="0.08"/><path d="M 35 50 L 65 50" stroke="%230066CC" stroke-width="0.5" opacity="0.08"/><line x1="20" y1="80" x2="80" y2="80" stroke="%230066CC" stroke-width="0.5" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23sporPattern)"/></svg>'),
-    linear-gradient(to right, rgba(180,229,255,0.2), rgba(168,216,255,0.2));
-  background-size: 100px 100px, 100% 100%;
+  background: linear-gradient(160deg, #EBF5FF 0%, #CCEEFF 100%);
 }
 
 .page.pattern-template-butce {
   background-color: transparent;
-  background: linear-gradient(135deg, #D4FFB4 0%, #C8E6C9 100%);
-  background-image: 
-    url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="butcePattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse"><rect width="100" height="100" fill="%23D4FFB4"/><rect x="20" y="20" width="60" height="60" fill="none" stroke="%234CAF50" stroke-width="0.5" opacity="0.1"/><circle cx="50" cy="50" r="15" fill="none" stroke="%234CAF50" stroke-width="0.5" opacity="0.08"/><line x1="20" y1="85" x2="80" y2="85" stroke="%234CAF50" stroke-width="0.5" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23butcePattern)"/></svg>'),
-    linear-gradient(to bottom right, rgba(212,255,180,0.2), rgba(200,230,201,0.2));
-  background-size: 100px 100px, 100% 100%;
+  background: linear-gradient(160deg, #F0FFF4 0%, #D4EDDA 100%);
+}
+
+.page.pattern-template-duygu {
+  background-color: transparent;
+  background: linear-gradient(160deg, #FDF0FF 0%, #EDD9FF 100%);
+}
+
+.page.pattern-template-okuma {
+  background-color: transparent;
+  background: linear-gradient(160deg, #FFFBEB 0%, #FEF3C7 100%);
 }
 
 /* ===== NAV ARROWS ===== */
@@ -799,6 +810,40 @@ body {
   animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
   border-color: #ef4444 !important;
   color: #ef4444 !important;
+}
+
+/* ==================== RENAME MODAL ==================== */
+.rename-modal-content {
+  max-width: 340px;
+  background: rgba(26,29,39,0.7) !important;
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(124,106,247,0.25);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+}
+.rename-modal-content .modal-header {
+  background: rgba(124,106,247,0.08);
+  border-bottom: 1px solid rgba(124,106,247,0.2);
+}
+.rename-modal-content .modal-header h2 {
+  font-size: 1rem;
+  color: var(--text);
+}
+.rename-modal-content #rename-input {
+  font-size: 1rem;
+  padding: 11px 14px;
+  border-radius: 10px;
+  border: 1.5px solid var(--border);
+  background: rgba(255,255,255,0.05);
+  color: var(--text);
+  width: 100%;
+  font-family: inherit;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.rename-modal-content #rename-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
 }
 
 /* ==================== PIN MODAL ==================== */
@@ -860,3 +905,46 @@ body {
     object-fit: cover;
     display: block;
 }
+
+/* ===== TEMPLATE TRACKERS ===== */
+.template-tracker {
+    pointer-events: none;
+    user-select: none;
+    max-height: 62%;
+    overflow: hidden;
+}
+
+.kalori-tracker,
+.spor-tracker,
+.butce-tracker {
+    background: rgba(255, 255, 255, 0.95);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.05);
+    margin-bottom: 15px;
+}
+
+.template-tracker input[type="checkbox"] {
+    pointer-events: auto !important;
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.template-tracker button {
+    pointer-events: auto !important;
+    cursor: pointer;
+}
+
+@media (max-width: 768px) {
+    .template-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .template-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
