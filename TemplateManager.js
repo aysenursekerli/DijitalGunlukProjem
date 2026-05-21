@@ -211,3 +211,27 @@ export function generateTemplateContent(pattern, bgImage) {
     // Oluşturulan HTML şablon metnini geri döndür
     return templateHTML;
 }
+
+export function getNotebookCardHTML(nb) {
+    let lockHtml = nb.isLocked ? `<i data-lucide="lock" class="book-lock-icon"></i>` : '';
+    let dateStr = new Date().toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+    if (nb.createdAt) {
+        dateStr = new Date(nb.createdAt).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+    }
+    
+    return `
+        <div class="book-cover-design" style="background: ${nb.coverColor}; position: relative;">
+            ${lockHtml}
+            <div class="book-settings" title="Defter Ayarları" data-id="${nb.id}">
+                <i data-lucide="more-vertical"></i>
+            </div>
+            <div class="book-settings-menu" id="menu-${nb.id}">
+                <button class="toggle-pin-btn" data-id="${nb.id}">${nb.isLocked ? 'Şifreyi Kaldır' : 'Şifre Koy'}</button>
+                <button class="rename-nb-btn" data-id="${nb.id}">İsim Değiştir</button>
+                <button class="delete-nb-btn" data-id="${nb.id}" style="color: var(--danger);">Defteri Sil</button>
+            </div>
+            <h3 class="book-title">${nb.name}</h3>
+            <div class="book-date">${dateStr}</div>
+        </div>
+    `;
+}

@@ -1,6 +1,6 @@
 import { DatabaseManager } from './Veritabani.js';
 import { DrawingPad } from './CanvasMotoru.js';
-import { generateTemplateContent } from './TemplateManager.js';
+import { generateTemplateContent, getNotebookCardHTML } from './TemplateManager.js';
 /**
  * AppManager (Uygulama Yöneticisi): Projenin kalbidir.
  * 3 farklı aşamayı (Phase) yönetir:
@@ -138,6 +138,20 @@ export const AppManager = {
             });
         }
 
+        const btnUnlockAll = document.getElementById('btn-unlock-all');
+        if (btnUnlockAll) {
+            btnUnlockAll.addEventListener('click', () => {
+                if (window.drawingPad) {
+                    const count = window.drawingPad.unlockAllMediaOnPage();
+                    if (count > 0) {
+                        alert(`${count} adet katmanın kilidi açıldı!`);
+                    } else {
+                        alert('Bu sayfada kilitli katman bulunmuyor.');
+                    }
+                }
+            });
+        }
+
         const btnToggleDate = document.getElementById('menu-toggle-date');
         if (btnToggleDate) {
             btnToggleDate.addEventListener('click', () => {
@@ -243,11 +257,15 @@ export const AppManager = {
         }
         setTimeout(() => {
             const splash = document.getElementById('splash-screen');
+            const appContainer = document.getElementById('app-container');
+            if (appContainer) {
+                appContainer.style.display = 'block';
+            }
             if(splash) {
                 splash.style.opacity = '0';
-                setTimeout(() => splash.style.display = 'none', 500);
+                setTimeout(() => splash.style.display = 'none', 800);
             }
-        }, 1500);
+        }, 2500);
     },
 
     /**
@@ -263,25 +281,7 @@ export const AppManager = {
         this.notebooks.forEach(nb => {
             const card = document.createElement('div');
             card.className = 'book-card';
-            let lockHtml = nb.isLocked ? `<i data-lucide="lock" class="book-lock-icon"></i>` : '';
-            card.innerHTML = `
-                <div class="book-cover-design" style="background: ${nb.coverColor}; position: relative;">
-                    ${lockHtml}
-                    <div class="book-settings" title="Defter Ayarları" data-id="${nb.id}">
-                        <i data-lucide="more-vertical"></i>
-                    </div>
-                    <div class="book-settings-menu" id="menu-${nb.id}">
-                        <button class="toggle-pin-btn" data-id="${nb.id}">${nb.isLocked ? 'Şifreyi Kaldır' : 'Şifre Koy'}</button>
-                        <button class="rename-nb-btn" data-id="${nb.id}">İsim Değiştir</button>
-                        <button class="delete-nb-btn" data-id="${nb.id}" style="color: var(--danger);">Defteri Sil</button>
-                    </div>
-                    <h3 class="book-title">${nb.name}</h3>
-                    <div class="book-date">${(() => {
-                        if (!nb.createdAt) return new Date().toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
-                        return new Date(nb.createdAt).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
-                    })()}</div>
-                </div>
-            `;
+            card.innerHTML = getNotebookCardHTML(nb);
             card.addEventListener('click', (e) => {
                 if (e.target.closest('.book-settings') || e.target.closest('.book-settings-menu')) return;
                 this.handleBookClick(nb);

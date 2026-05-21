@@ -476,7 +476,9 @@ export class DrawingPad {
             mediaData.textColor = '#333333';
         }
         const wrapper = document.createElement('div');
-        wrapper.className = isInitialLoad ? 'transform-box' : 'transform-box selected';
+        let cls = isInitialLoad ? 'transform-box' : 'transform-box selected';
+        if (mediaData.isLocked) cls = 'transform-box locked';
+        wrapper.className = cls;
         wrapper.dataset.id = mediaData.id;
         wrapper.style.left = `${mediaData.x}px`;
         wrapper.style.top = `${mediaData.y}px`;
@@ -507,6 +509,7 @@ export class DrawingPad {
             <div class="media-controls">
                 <button class="layer-btn" data-action="front" title="Öne Getir"><i data-lucide="arrow-up-to-line"></i></button>
                 <button class="layer-btn" data-action="back" title="Arkaya Gönder"><i data-lucide="arrow-down-to-line"></i></button>
+                <button class="layer-btn lock-btn" data-action="lock" title="Kilitle" style="color:#eab308;"><i data-lucide="lock"></i></button>
                 <button class="layer-btn delete-btn" data-action="delete" title="Sil"><i data-lucide="trash-2"></i></button>
                 ${mediaData.type === 'text' ? `
                 <div style="border-top:1px solid rgba(255,255,255,0.1); margin-top:4px; padding-top:4px; display:flex; flex-direction:column; gap:6px;">
@@ -644,14 +647,18 @@ export class DrawingPad {
                     const mediaId = elem.dataset.id;
                     elem.remove();
                     this.deleteMediaFromDB(mediaId);
+                } else if(action === 'lock') {
+                    elem.classList.remove('selected');
+                    elem.classList.add('locked');
+                    this.updateMediaData(elem.dataset.id, { isLocked: true });
                 }
             });
         }
         elem.addEventListener('pointerdown', (e) => {
-            if(this.currentMode !== 'hand') return; 
+            if(this.currentMode !== 'hand' || elem.classList.contains('locked')) return; 
             e.stopPropagation(); 
             e.preventDefault();
-            document.querySelectorAll('.transform-box').forEach(el => el.classList.remove('selected'));
+            this.activePageContent.querySelectorAll('.transform-box').forEach(el => el.classList.remove('selected'));
             elem.classList.add('selected');
             startX = e.clientX;
             startY = e.clientY;
@@ -977,5 +984,16 @@ export class DrawingPad {
             if(this.onRenderSidebar) this.onRenderSidebar();
         }
         this.currentStroke = null;
+    }
+
+    unlockAllMediaOnPage() {
+        if (!this.activePageContent) return;
+        let unlockedCount = 0;
+        this.activePageContent.querySelectorAll('.transform-box.locked').forEach(elem => {
+            elem.classList.remove('locked');
+            this.updateMediaData(elem.dataset.id, { isLocked: false });
+            unlockedCount++;
+        });
+        return unlockedCount;
     }
 }

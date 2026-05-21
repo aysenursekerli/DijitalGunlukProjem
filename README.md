@@ -1,89 +1,62 @@
-content = """# 📓 Dijital Günlük ve Akıllı Ajanda
+# 📓 Memori: OmniPlanner - Nesne Yönelimli ve Yapay Zeka Destekli Dijital Ajanda
 
-Ben **AYŞE NUR ŞEKERLİ**, Pamukkale Üniversitesi Yönetim Bilişim Sistemleri (YBS) öğrencisiyim. Bu proje benim hem yazılım öğrenme sürecimin hem de dönem ödevimin bir parçası. 
+**Memori: OmniPlanner**, geleneksel web tabanlı not defterlerinin sunduğu yüzeysel çözümlerin ötesine geçerek; modern web teknolojilerini **(PWA, HTML5 Canvas API, IndexedDB)** güçlü bir yazılım mimarisiyle harmanlayan akademik düzeyde bir dijital ajanda projesidir. 
 
----
-
-## ✨ Uygulamamın Tüm Özellikleri (Neler Yapabiliyor?)
-
-### 1. Gerçekçi Kitap Deneyimi ve Şablonlar
-* **3D Sayfa Çevirme (Page Flip):** Sayfaları fareyle veya dokunarak tuttuğumda gerçek bir defter gibi kıvrılarak çevriliyor.
-* **Defter Kütüphanesi:** İstediğim kadar yeni defter oluşturabiliyor ve her birine farklı dijital kapaklar seçebiliyorum.
-* **Sayfa Taslakları:** İhtiyacıma göre çizgili, kareli, noktalı (bullet journal) veya tamamen boş sayfa şablonları kullanabiliyorum.
-
-### 2. Çizim ve Not Alma (Canvas Motoru)
-* **Hassas Çizim Araçları:** Kalemle ekrana yazarken gecikme olmuyor. Farklı renk paletleri, fırça kalınlıkları ve silgi seçenekleri var.
-
-### 3. Gelişmiş İçerik ve Düzenleme (Transform Motoru)
-* **Şekil ve İkon Menüsü:** Sadece çizim değil; Kare, Daire, Yıldız, Üçgen, Ok gibi temiz vektörel şekiller ekleyebiliyorum.
-* **Metin Kutuları:** Klavyeyle yazı yazabilmek için sayfaya sürüklenebilir metin kutuları ekleyebiliyorum.
-* **Sticker ve Fotoğraf:** Sayfaları süslemek için çıkartma ve cihazımdan resim ekleme desteği.
-* **360° Döndürme ve Boyutlandırma:** Eklediğim her şekli, yazıyı veya resmi köşelerinden tutup büyütebiliyor ve döndürme koluyla 360 derece çevirebiliyorum.
-* **Katman Yönetimi:** Bir şekle tıkladığımda açılan cam efektli minik menüden onu diğer şekillerin önüne getirebiliyor veya arkasına gönderebiliyorum.
-
-### 4. Akıllı Sayfa Yönetimi ve Güvenlik
-* **Akıllı Yan Panel (Sidebar):** Sayfaların küçük ön izlemelerini (thumbnail) solda açılır bir panelde görüyorum. Sayfaların yerlerini sürükleyip değiştirebiliyor veya silebiliyorum.
-* **Akıllı Zoom:** Yazı yazmaya başladığımda sayfa bana otomatik olarak yaklaşıyor (zoom yapıyor), bitince pürüzsüzce geri uzaklaşıyor.
-* **Gizli Kasa (PIN Kilit Sistemi):** Özel defterlerime 4 haneli şifre koyabiliyorum. Şifreyi bilmeyen içindeki sayfaları göremiyor!
-* **Kusursuz Veri Kaydı (PageId):** Sayfaları sıra numarasıyla değil, onlara özel gizli kimliklerle (UUID) cihaz hafızasına (IndexedDB) kaydediyorum. Böylece aradan sayfa silsem bile çizimler ve eklediğim şekiller asla birbirine karışmıyor.
-### 5. PWA (Kurulabilir Web Uygulaması) ve Çevrimdışı Destek
-* **Masaüstü ve Mobil Kurulum:** Uygulamayı bir web sitesinden öte, tarayıcı üzerinden bilgisayarınıza veya tabletinize doğrudan bir masaüstü/mobil programmış gibi kurabilirsiniz.
-* **Service Worker:** Çevrimdışı (internetsiz) olsanız bile uygulamanın arayüzü ve verileriniz cihazda (IndexedDB) yerel olarak tutulduğu için sorunsuz kullanmaya devam edebilirsiniz.
-
-### 🚀 Gelecek Vizyonu (Future Scope)
-* **Native Mobil Dönüşüm:** Bu projenin modüler mimarisi ve yerel veri yapısı, ilerleyen süreçlerde **Flutter** veya **React Native** gibi teknolojilerle doğrudan iOS ve Android cihazlara uyumlu yerel (native) bir mobil uygulamaya taşınmasına zemin hazırlamaktadır.
+Bu proje, karmaşık çizim ve katman (layer) işlemlerini pürüzsüz bir "3D Sayfa Çevirme" deneyimiyle birleştirir. Temel amacı, kullanıcılara sanki fiziksel bir deftere yazıyormuş hissini %100 çevrimdışı (offline-first) çalışabilen, yüksek performanslı ve nesne yönelimli (OOP) bir ekosistem içerisinde sunmaktır.
 
 ---
 
-## 🛠️ Tech Stack (Kullanılan Teknolojiler)
+## ⚙️ Teknik Mimari ve Akademik Yaklaşım
 
-*   **Çekirdek Teknolojiler:** HTML5, Vanilla JavaScript (ES6 Modules), CSS3
-*   **Veritabanı:** IndexedDB (Yerel Tarayıcı Veritabanı)
-*   **Çizim ve Render:** HTML5 Canvas API
-*   **Arayüz İkonları:** Lucide Icons (v0.378.0)
-*   **Sayfa Çevirme Animasyonu:** St.PageFlip (v2.0.7)
+Projenin altyapısı, SOLID prensipleri ve Clean Code standartları gözetilerek inşa edilmiştir. Spagetti kod yığınlarından kaçınılmış ve modüler bir mimari benimsenmiştir.
 
----
-
-## 🤖 Yapay Zeka Metodolojisi
-
-Geliştirme, hata ayıklama ve kod mimarisi süreçlerinde **Gemini 3.1** dil modeli aktif olarak kullanılmıştır. Yapay zeka, özellikle IndexedDB asenkron yönetimleri, Canvas üzerinde real-time çizim optimizasyonları ve modüler kod mimarisi (SRP, DIP prensipleri) konularında bir mentor ve pair-programmer olarak projeye dahil edilmiştir.
+| Teknoloji / Mimari | Projedeki Görevi | Yazılım Mühendisliği Karşılığı |
+| :--- | :--- | :--- |
+| **ES6 Modül Mimarisi & CustomEvent** | `Arayuz.js` ve `CanvasMotoru.js` arasındaki sıkı bağlılığın (Tight Coupling) kırılması ve olay tabanlı (event-driven) iletişimin sağlanması. | **Loose Coupling & Separation of Concerns (SoC):** Modüllerin birbirinden bağımsız çalışabilir ve test edilebilir hale getirilmesi. |
+| **TemplateManager.js** | Kullanıcı arayüzüne ait statik HTML şablonlarının (defter listesi, çıkartma paneli vb.) JS mantığından ayrıştırılarak tek bir merkezden yönetilmesi. | **Single Responsibility Principle (SRP):** Her modülün sadece kendi işinden (bu durumda arayüz bileşenleri oluşturmaktan) sorumlu olması. |
+| **IndexedDB (Asenkron DB)** | Çizim yolları (strokes), katman koordinatları ve şifreli notların tarayıcı üzerinde asenkron olarak saklanması. | LocalStorage'ın 5MB kısıtlamasını aşan, veri kayıpsız (Data Persistence) ve performanslı NoSQL veri yönetimi. |
+| **Service Worker & PWA** | Uygulamanın statik dosyalarının önbelleğe alınması (caching) ve internet bağlantısı olmadan da tam kapasite çalışabilmesi. | **Progressive Web App (PWA) & Offline-First:** Platform bağımsız (Desktop/Mobil) kurulabilen dayanıklı (Resilient) uygulama altyapısı. |
+| **Pixabay REST API** | Kullanıcıların "Sticker (Çıkartma)" arayüzü üzerinden dinamik, estetik ve transparan illüstrasyonlar çekerek sayfalarına ekleyebilmesi. | **API Tüketimi & Asenkron Mimari:** Uzak sunucularla asenkron (Fetch/Promises) veri alışverişi. |
 
 ---
 
-## 📖 Kullanım Kılavuzu
+## 🧭 Temel Özellikler ve Kullanım Kılavuzu
 
-*   **Yeni Defter Oluşturma:** Kütüphane ekranındaki "Yeni Günlük Ekle" butonuna tıklayın, adını ve kapağını seçin.
-*   **Çizim Yapma ve Medya Ekleme:** Defter içindeyken üstteki araç çubuğunu kullanın. "Kalem" ikonuna tıklayarak çizebilir, "Şekil" ve "Sticker" ikonlarından medyalar ekleyebilirsiniz.
-*   **Sayfa Değiştirme:** Çizim modundayken "El (Hand)" aracını seçin ve sayfanın kenarlarından tutarak sürükleyip çevirin.
-*   **Defter Silme/Ayarlar:** Kütüphanedeki defter kapağının üstünde beliren üç noktaya tıklayarak defterin adını değiştirebilir veya PIN kodu ile şifreleyebilirsiniz.
-*   **İçeriği Temizleme:** Eklediğiniz nesneleri (sticker, metin vb.) üzerlerine tıklayıp çöp kutusuna basarak silebilir, çizimleri geri al tuşuyla temizleyebilirsiniz.
+### 1. Kütüphane & Defter Yönetimi 📚
+- Kullanıcılar kendi defterlerini oluşturabilir, defter kapak renklerini ve isimlerini belirleyebilirler. 
+- Her bir defter, IndexedDB üzerinde kendi "Benzersiz Kimliği (UUID)" ile tutulur.
 
----
+### 2. StPageFlip Entegrasyonu 📖
+- Uygulama, zarif bir "Memori" kalem animasyonu ile başlar ve kullanıcıyı doğrudan kütüphaneye alır. 
+- Defter açıldığında, sayfa çevirme işlemleri 3D (StPageFlip) algoritmasıyla fiziksel bir kitap deneyimi sunar. 
 
-## 🚀 Kurulum ve Kullanım
+### 3. Gelişmiş Çizim Motoru (Canvas API) 🎨
+- Kullanıcılar defterin herhangi bir sayfasına **serbest el çizimleri** yapabilir. 
+- Katman mantığı sayesinde yazılar, resimler ve çıkartmalar üst üste binebilir; kilitlenebilir (Layer Lock) ve kalınlık ayarları dinamik olarak değiştirilebilir.
 
-Proje **ES6 Modülleri (`export` / `import`)** mimarisi kullanılarak Clean Code prensiplerine uygun olarak refactor edilmiştir. Bu nedenle projeyi düz HTML dosyasına çift tıklayarak çalıştıramazsınız (Tarayıcı CORS güvenlik kısıtlamaları).
-
-**Çalıştırma Adımları:**
-1. Bilgisayarınızda **Node.js** yüklü olmalıdır.
-2. Terminal (Komut İstemi) açıp proje klasörüne gidin.
-3. Herhangi bir yerel HTTP Sunucusu başlatın. Örneğin:
-   * **VS Code** kullanıyorsanız: `Live Server` eklentisini kurup `index.html`'e sağ tıklayıp "Open with Live Server" diyebilirsiniz.
-   * **Python** ile: Terminale `python -m http.server` yazın.
-   * **Node.js** ile: Terminale `npx serve` veya `npx http-server` yazın.
-4. Tarayıcınızdan `http://localhost:8000` (veya sunucunun verdiği porta) giderek uygulamayı kullanmaya başlayabilirsiniz.
+### 4. Estetik Çıkartmalar (Sticker Drawer) 🌈
+- Ekranı karartan klasik "Popup (Modal)" mantığı terk edilmiştir. Bunun yerine sağdan yumuşakça kayarak açılan (Right Drawer) modern bir arayüz paneli tasarlanmıştır.
+- Panel içerisindeki canlı arama çubuğu, **Pixabay API** ile haberleşerek saniyeler içinde estetik illüstrasyonları getirir ve sürükle-bırak/tıklama mantığıyla tuvale entegre eder.
 
 ---
 
-## 🧪 Çıktı Kontrol Metodolojisi (Testler)
+## 🛠️ Karşılaşılan Zorluklar ve Çözümler
 
-Projeye kod güvenilirliğini artırmak için **Birim Testleri (Unit Tests)** entegre edilmiştir. Uygulamanın IndexedDB'ye kayıt atma, doğru veri yapısı oluşturma (UUID temelli ID atama vb.) fonksiyonlarının sağlamlığı doğrulanmıştır.
+Proje geliştirme sürecinde, hem donanım/tarayıcı kısıtlamalarından hem de kod büyüdükçe ortaya çıkan yapısal karmaşadan dolayı çeşitli teknik borçlarla (Technical Debt) karşılaşılmış ve akademik çözümler üretilmiştir:
 
-**Testleri Çalıştırmak İçin:**
-1. Proje dizininde terminali açın.
-2. Bağımlılık sorunu yaşamadan yerleşik test aracını çalıştırmak için aşağıdaki komutu girin:
-   ```bash
-   node --test __tests__/temel.test.js
-   ```
-3. Tüm testlerin "Geçti" (Pass) ibaresiyle sonuçlandığını konsoldan teyit edebilirsiniz. Veritabanı ve Arayüz mock (simülasyon) testleri başarıyla tamamlanmıştır.
+* **🚨 Sorun 1 (Mimari Kilitlenme):** Projenin ilk aşamalarında tüm fonksiyonların global alanda (window objesinde) yer alması, değişken çakışmalarına ve bakım zorluğuna (Spagetti Kod) yol açtı.
+  * **💡 Çözüm:** Sistematik olarak **ES6 Modül yapısına** geçiş yapıldı. Bağımlılıklar `import/export` ifadeleri ile izole edildi. Ek olarak `TemplateManager.js` oluşturularak HTML şablonları JavaScript mantığından tamamen soyutlandı.
+
+* **🚨 Sorun 2 (UI/UX Kesintisi):** Kullanıcıların çıkartma (sticker) eklemek için bir butona bastığında açılan ortalanmış popup, defterin görünürlüğünü engelliyor ve odak kaybına neden oluyordu.
+  * **💡 Çözüm:** Popup yapısı tamamen iptal edildi. Ekranın sağ tarafından kayarak açılan ve arka planı karartmayan şık bir **"Drawer (Yan Panel)"** entegre edildi. Kullanıcılar artık defterlerini görürken bir yandan Pixabay sonuçlarında gezinebilmektedir.
+
+* **🚨 Sorun 3 (Sayfa Çevirirken Veri Kaybı):** StPageFlip kütüphanesi ile sayfalar arası 3D geçiş yapılırken, tek bir Canvas kullanıldığı için eski sayfanın çizimleri yeni sayfaya taşıyor veya siliniyordu.
+  * **💡 Çözüm:** Güçlü bir **Event-Driven (Olay Yönelimli)** yapı kuruldu. Sayfa her çevrildiğinde `page-flipped` isimli bir CustomEvent (Özel Olay) fırlatıldı. `CanvasMotoru.js` bu olayı dinleyerek; önce tuvali (context) temizledi, ardından yeni sayfanın (pageIndex) verilerini IndexedDB'den asenkron olarak okuyup ilgili çizimleri ve medya katmanlarını tuvale kusursuz bir şekilde yeniden giydirdi.
+
+---
+
+## 🚀 Gelecek Vizyonu
+
+Memori: OmniPlanner projesinin mevcut web mimarisi (HTML5, CSS3, ES6 JS, IndexedDB) oldukça esnek, asenkron ve modüler bir temel üzerine oturtulmuştur. 
+
+Gelecekteki temel vizyonumuz; bu web tabanlı PWA altyapısındaki iş kurallarını (Business Logic) koruyarak projeyi **Flutter** veya **React Native** teknolojileri kullanılarak tam yerel (Native) bir mobil iOS/Android uygulamasına dönüştürmektir. Böylelikle tabletlerde (örneğin iPad ve Apple Pencil entegrasyonuyla) daha derin donanımsal çizim ivmelenmelerine ve basınç hassasiyetine erişim sağlanacaktır.

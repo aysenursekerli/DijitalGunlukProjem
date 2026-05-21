@@ -10,19 +10,20 @@
     <title>Dijital Ajada</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
+    <!-- Splash Screen (Giriş Ekranı) -->
     <div id="splash-screen" class="splash-screen">
-        <div class="splash-logo">
-            <i data-lucide="book-open" class="splash-icon"></i>
+        <div class="splash-content">
+            <div class="logo-container">
+                <span class="memori-text">Memori</span>
+                <i data-lucide="pen-tool" class="pen-icon"></i>
+            </div>
+            <div class="splash-loader"></div>
         </div>
-        <h1 class="splash-title">Dijital Ajada</h1>
-        <p class="splash-subtitle">Anılarını dijital dünyaya taşı</p>
     </div>
     <div id="notebook-modal" class="modal">
         <div class="modal-content">
@@ -100,6 +101,7 @@
                 <button class="tool-btn" data-tool="fountain" title="Dolma Kalem" style="flex-shrink:0;"><i data-lucide="pen-tool"></i></button>
                 <button class="tool-btn" data-tool="highlighter" title="Fosforlu Kalem" style="flex-shrink:0;"><i data-lucide="highlighter"></i></button>
                 <button class="tool-btn" data-tool="eraser" title="Silgi" style="flex-shrink:0;"><i data-lucide="eraser"></i></button>
+                <button class="tool-btn" id="btn-unlock-all" title="Kilitleri Aç" style="flex-shrink:0; color: #eab308;"><i data-lucide="unlock"></i></button>
                 
                 <div class="tool-separator" style="flex-shrink:0;"></div>
                 
