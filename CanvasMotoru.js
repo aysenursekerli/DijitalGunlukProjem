@@ -509,13 +509,22 @@ export class DrawingPad {
                 <button class="layer-btn" data-action="back" title="Arkaya Gönder"><i data-lucide="arrow-down-to-line"></i></button>
                 <button class="layer-btn delete-btn" data-action="delete" title="Sil"><i data-lucide="trash-2"></i></button>
                 ${mediaData.type === 'text' ? `
-                <div style="border-top:1px solid rgba(255,255,255,0.1); margin-top:2px; padding-top:2px;">
-                    <select class="layer-font-select" style="background:transparent; color:#fff; border:none; outline:none; font-size:11px; cursor:pointer; width:100%;">
-                        <option style="color:#000;" value="Inter" ${mediaData.fontStyle==='Inter'?'selected':''}>Klasik</option>
-                        <option style="color:#000;" value="cursive" ${mediaData.fontStyle==='cursive'?'selected':''}>El Yazısı</option>
-                        <option style="color:#000;" value="Georgia" ${mediaData.fontStyle==='Georgia'?'selected':''}>Serif</option>
-                        <option style="color:#000;" value="'Courier New'" ${mediaData.fontStyle==="'Courier New'"?'selected':''}>Daktilo</option>
+                <div style="border-top:1px solid rgba(255,255,255,0.1); margin-top:4px; padding-top:4px; display:flex; flex-direction:column; gap:6px;">
+                    <select class="layer-font-select" style="background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:4px; padding:4px; font-size:12px; outline:none; cursor:pointer; width:100%;">
+                        <option value="Inter" ${mediaData.fontStyle==='Inter'?'selected':''}>Klasik</option>
+                        <option value="cursive" ${mediaData.fontStyle==='cursive'?'selected':''}>El Yazısı</option>
+                        <option value="Georgia" ${mediaData.fontStyle==='Georgia'?'selected':''}>Serif</option>
+                        <option value="'Courier New'" ${mediaData.fontStyle==="'Courier New'"?'selected':''}>Daktilo</option>
                     </select>
+                    <div style="display:flex; gap:4px; justify-content:space-between;">
+                        <button class="layer-btn align-btn" data-align="left" style="flex:1; ${mediaData.textAlign==='left'?'background:var(--accent);color:white;':''}"><i data-lucide="align-left" style="width:14px;height:14px;"></i></button>
+                        <button class="layer-btn align-btn" data-align="center" style="flex:1; ${mediaData.textAlign==='center'?'background:var(--accent);color:white;':''}"><i data-lucide="align-center" style="width:14px;height:14px;"></i></button>
+                        <button class="layer-btn align-btn" data-align="right" style="flex:1; ${mediaData.textAlign==='right'?'background:var(--accent);color:white;':''}"><i data-lucide="align-right" style="width:14px;height:14px;"></i></button>
+                    </div>
+                    <div style="display:flex; align-items:center; justify-content:space-between; padding:0 2px;">
+                        <span style="font-size:11px; color:var(--text-muted);">Renk:</span>
+                        <input type="color" class="layer-color-picker" value="${mediaData.textColor}" style="width:24px; height:24px; padding:0; border:1px solid var(--border); border-radius:4px; cursor:pointer; background:transparent;">
+                    </div>
                 </div>
                 ` : ''}
             </div>
@@ -562,6 +571,9 @@ export class DrawingPad {
                 mediaControls.classList.toggle('active');
             });
             const layerFontSelect = wrapper.querySelector('.layer-font-select');
+            const layerColorPicker = wrapper.querySelector('.layer-color-picker');
+            const alignBtns = wrapper.querySelectorAll('.align-btn');
+            
             if (layerFontSelect) {
                 layerFontSelect.addEventListener('pointerdown', e => e.stopPropagation());
                 layerFontSelect.addEventListener('change', (e) => {
@@ -571,6 +583,37 @@ export class DrawingPad {
                         textContent.style.fontFamily = newFont;
                         this.updateMediaData(mediaData.id, { fontStyle: newFont });
                     }
+                });
+            }
+            if (layerColorPicker) {
+                layerColorPicker.addEventListener('pointerdown', e => e.stopPropagation());
+                layerColorPicker.addEventListener('input', (e) => {
+                    const newColor = e.target.value;
+                    const textContent = wrapper.querySelector('.text-content');
+                    if (textContent) {
+                        textContent.style.color = newColor;
+                        this.updateMediaData(mediaData.id, { textColor: newColor });
+                    }
+                });
+            }
+            if (alignBtns.length > 0) {
+                alignBtns.forEach(btn => {
+                    btn.addEventListener('pointerdown', e => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        const align = btn.dataset.align;
+                        const textContent = wrapper.querySelector('.text-content');
+                        if (textContent) {
+                            textContent.style.textAlign = align;
+                            this.updateMediaData(mediaData.id, { textAlign: align });
+                            alignBtns.forEach(b => {
+                                b.style.background = 'transparent';
+                                b.style.color = 'inherit';
+                            });
+                            btn.style.background = 'var(--accent)';
+                            btn.style.color = 'white';
+                        }
+                    });
                 });
             }
         }

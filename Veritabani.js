@@ -127,6 +127,32 @@ export const DatabaseManager = {
     },
 
     /**
+     * Belirtilen defteri ve ona ait tüm çizimleri veritabanından siler.
+     * @param {string} notebookId - Silinecek defterin ID'si
+     */
+    async deleteNotebook(notebookId) {
+        if (!this.db) return;
+        const tx = this.db.transaction(['notebooks', 'drawings'], 'readwrite');
+        return new Promise((resolve, reject) => {
+            tx.objectStore('notebooks').delete(notebookId);
+            
+            const storeDrawings = tx.objectStore('drawings');
+            const getDrawingsReq = storeDrawings.getAll();
+            getDrawingsReq.onsuccess = () => {
+                const drawings = getDrawingsReq.result;
+                drawings.forEach(d => {
+                    if (d.notebookId === notebookId) {
+                        storeDrawings.delete(d.id);
+                    }
+                });
+            };
+            
+            tx.oncomplete = resolve;
+            tx.onerror = reject;
+        });
+    },
+
+    /**
      * Belirli bir sayfadaki (pageId) çizimleri, canvas motorundaki (currentHistory) en güncel haliyle senkronize eder.
      * Silinmiş veya geri alınmış (undo) çizimleri veritabanından temizleyip, yeni listeyi kaydeder.
      * 

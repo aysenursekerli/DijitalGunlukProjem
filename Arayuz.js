@@ -101,6 +101,66 @@ export const AppManager = {
                 }
             });
         }
+        
+        const stickerBtn = document.getElementById('sticker-popup-btn');
+        if(stickerBtn) {
+            stickerBtn.addEventListener('click', () => {
+                const rightSidebar = document.getElementById('right-sidebar');
+                if(rightSidebar) {
+                    rightSidebar.classList.toggle('active');
+                    if (rightSidebar.classList.contains('active')) {
+                        const grid = document.getElementById('pixabay-grid');
+                        if (grid && grid.innerHTML.trim() === '') {
+                            this.fetchPixabayStickers('aesthetic sticker illustration');
+                        }
+                    }
+                }
+            });
+        }
+        
+        const closeRightSidebarBtn = document.getElementById('close-right-sidebar-btn');
+        if (closeRightSidebarBtn) {
+            closeRightSidebarBtn.addEventListener('click', () => {
+                document.getElementById('right-sidebar').classList.remove('active');
+            });
+        }
+
+        const pixabaySearchBtn = document.getElementById('pixabay-search-btn');
+        const pixabaySearchInput = document.getElementById('pixabay-search');
+        if (pixabaySearchBtn && pixabaySearchInput) {
+            const doSearch = () => {
+                const query = pixabaySearchInput.value.trim() || 'aesthetic sticker illustration';
+                this.fetchPixabayStickers(query);
+            };
+            pixabaySearchBtn.addEventListener('click', doSearch);
+            pixabaySearchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') doSearch();
+            });
+        }
+
+        const btnToggleDate = document.getElementById('menu-toggle-date');
+        if (btnToggleDate) {
+            btnToggleDate.addEventListener('click', () => {
+                if(!this.activePageData || !this.activeNotebookId) return;
+                const nb = this.notebooks.find(n => n.id === this.activeNotebookId);
+                const pageId = this.activePageData.canvas.dataset.page;
+                if(nb) {
+                    const page = nb.pages.find(p => p.id === pageId);
+                    if(page) {
+                        page.hideDate = !page.hideDate;
+                        DatabaseManager.saveNotebooks(this.notebooks);
+                        
+                        const watermark = this.activePageData.content.querySelector('.page-watermark-date');
+                        if (watermark) {
+                            watermark.style.display = page.hideDate ? 'none' : 'block';
+                        }
+                    }
+                }
+                const dropdown = document.getElementById('more-options-dropdown');
+                if (dropdown) dropdown.classList.remove('active');
+            });
+        }
+
         document.getElementById('btn-finish-edit').addEventListener('click', () => {
             this.closeEditMode();
             this.switchPhase(1);
@@ -213,9 +273,13 @@ export const AppManager = {
                     <div class="book-settings-menu" id="menu-${nb.id}">
                         <button class="toggle-pin-btn" data-id="${nb.id}">${nb.isLocked ? 'Şifreyi Kaldır' : 'Şifre Koy'}</button>
                         <button class="rename-nb-btn" data-id="${nb.id}">İsim Değiştir</button>
+                        <button class="delete-nb-btn" data-id="${nb.id}" style="color: var(--danger);">Defteri Sil</button>
                     </div>
                     <h3 class="book-title">${nb.name}</h3>
-                    <div class="book-date">Nisan 2026</div>
+                    <div class="book-date">${(() => {
+                        if (!nb.createdAt) return new Date().toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+                        return new Date(nb.createdAt).toLocaleDateString('tr-TR', { month: 'long', year: 'numeric' });
+                    })()}</div>
                 </div>
             `;
             card.addEventListener('click', (e) => {
@@ -242,6 +306,16 @@ export const AppManager = {
                 e.stopPropagation();
                 settingsMenu.classList.remove('active');
                 this.openRenameModal(nb);
+            });
+            const deleteBtn = card.querySelector('.delete-nb-btn');
+            deleteBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                settingsMenu.classList.remove('active');
+                if (confirm(`'${nb.name}' defterini tamamen silmek istediğinize emin misiniz? İçindeki tüm notlar kalıcı olarak silinecek.`)) {
+                    await DatabaseManager.deleteNotebook(nb.id);
+                    this.notebooks = this.notebooks.filter(n => n.id !== nb.id);
+                    this.renderLibrary();
+                }
             });
             grid.appendChild(card);
         });
@@ -355,7 +429,7 @@ export const AppManager = {
         const pattern = document.getElementById('notebook-pattern').value;
         const pages = [];
         for(let i = 1; i <= 2; i++) {
-            pages.push({ id: 'pg-' + (window.crypto && window.crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2)), snapshot: null });
+            pages.push({ id: 'pg-' + (window.crypto && window.crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2)), snapshot: null, createdAt: new Date().toISOString(), hideDate: false });
         }
         const newNb = {
             id: 'nb-' + (window.crypto && window.crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2)),
@@ -364,7 +438,8 @@ export const AppManager = {
             pattern: pattern,
             pages: pages,
             isLocked: false,
-            pinCode: ''
+            pinCode: '',
+            createdAt: new Date().toISOString()
         };
         this.notebooks.push(newNb);
         DatabaseManager.saveNotebooks(this.notebooks);
@@ -525,9 +600,18 @@ export const AppManager = {
             if (pageObj.bgImage) {
                 bgStyle = `style="background-image: url('${pageObj.bgImage}'); background-size: cover; background-position: center;"`;
             }
+            
+            let dateHTML = '';
+            if (!pageObj.hideDate) {
+                const pDate = pageObj.createdAt ? new Date(pageObj.createdAt) : new Date();
+                const formattedDate = pDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', weekday: 'long' });
+                dateHTML = `<div class="page-watermark-date" style="position:absolute; top:20px; left:20px; color:var(--text-muted); font-size:0.85rem; font-style:italic; opacity:0.6; pointer-events:none; z-index:100; font-family:'Georgia', serif;">${formattedDate}</div>`;
+            }
+
             bookDiv.innerHTML += `
                 <div class="page pattern-${pageObj.pattern || nb.pattern}" data-page="${pageObj.id}">
                     <div class="page-content" ${bgStyle}>
+                        ${dateHTML}
                         ${templateContent}
                         ${mediaHTML}
                         <button class="edit-page-btn" title="Bu Sayfayı Düzenle"><i data-lucide="pencil"></i> Düzenle</button>
@@ -771,7 +855,7 @@ export const AppManager = {
             currentIndex = window.pageFlip.getCurrentPageIndex();
         }
         const newPageId1 = 'pg-' + (window.crypto && window.crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2));
-        nb.pages.push({ id: newPageId1, snapshot: null, bgImage: bgImage || '', pattern: pattern || '' });
+        nb.pages.push({ id: newPageId1, snapshot: null, bgImage: bgImage || '', pattern: pattern || '', createdAt: new Date().toISOString(), hideDate: false });
         DatabaseManager.saveNotebooks(this.notebooks);
         if (this.currentPhase === 3) {
             this.refreshBookStructure(newPageId1);
@@ -918,6 +1002,49 @@ export const AppManager = {
             });
         }
     },
+    
+    /**
+     * Pixabay API üzerinden sticker/resim arar ve sağ çekmece içerisindeki ızgaraya ekler.
+     * @param {string} query Aranacak kelime
+     */
+    async fetchPixabayStickers(query) {
+        const grid = document.getElementById('pixabay-grid');
+        const loader = document.getElementById('pixabay-loader');
+        if (!grid || !loader) return;
+        
+        grid.innerHTML = '';
+        loader.style.display = 'block';
+        
+        try {
+            const apiKey = '55967545-20fd7263d1d8c6f40c7bd6d11';
+            const url = `https://pixabay.com/api/?key=${apiKey}&q=${encodeURIComponent(query)}&image_type=illustration&per_page=20`;
+            const response = await fetch(url);
+            const data = await response.json();
+            
+            loader.style.display = 'none';
+            
+            if (data.hits && data.hits.length > 0) {
+                data.hits.forEach(hit => {
+                    const item = document.createElement('div');
+                    item.className = 'pixabay-item';
+                    item.innerHTML = `<img src="${hit.webformatURL}" alt="${hit.tags}">`;
+                    item.addEventListener('click', () => {
+                        if (window.drawingPad) {
+                            window.drawingPad.addMediaToPage({ type: 'image', content: hit.webformatURL, width: 200, height: 200 });
+                        }
+                    });
+                    grid.appendChild(item);
+                });
+            } else {
+                grid.innerHTML = '<div style="color:var(--text-muted); padding:20px; grid-column:span 2; text-align:center;">Sonuç bulunamadı.</div>';
+            }
+        } catch (err) {
+            console.error('Pixabay API Hatası:', err);
+            loader.style.display = 'none';
+            grid.innerHTML = '<div style="color:var(--danger); padding:20px; grid-column:span 2; text-align:center;">Bağlantı hatası oluştu.</div>';
+        }
+    },
+
     /**
      * Düzenleme modundayken (Aşama 3) klavyedeki sağ/sol ok tuşlarına basıldığında
      * veya üst paneldeki ok butonlarına basıldığında bir sonraki / bir önceki sayfaya geçer.
