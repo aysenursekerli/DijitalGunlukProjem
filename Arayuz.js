@@ -12,6 +12,7 @@ export const AppManager = {
     currentPhase: 1, 
     views: {},
     activePageData: null,
+    currentCalDate: new Date(),
     notebooks: [
         {
             id: 'nb-sample-1',
@@ -38,8 +39,10 @@ export const AppManager = {
         this.views = {
             1: document.getElementById('view-library'),
             2: document.getElementById('view-preview'),
-            3: document.getElementById('view-edit')
+            3: document.getElementById('view-edit'),
+            4: document.getElementById('view-calendar')
         };
+        this.loadTheme();
         DatabaseManager.init().then(async () => {
             const savedNotebooks = await DatabaseManager.loadNotebooks();
             if (savedNotebooks && savedNotebooks.length > 0) {
@@ -58,6 +61,10 @@ export const AppManager = {
         document.getElementById('add-new-btn').addEventListener('click', () => {
             modal.classList.add('active');
         });
+        const themeBtn = document.getElementById('theme-toggle-btn');
+        if(themeBtn) {
+            themeBtn.addEventListener('click', () => this.toggleTheme());
+        }
         document.getElementById('close-modal-btn').addEventListener('click', () => {
             modal.classList.remove('active');
         });
@@ -74,10 +81,78 @@ export const AppManager = {
         document.getElementById('btn-add-page').addEventListener('click', () => {
             this.openTemplateModal();
         });
+        const btnEditCurrent = document.getElementById('btn-edit-current-page');
+        if (btnEditCurrent) {
+            btnEditCurrent.addEventListener('click', () => {
+                if (window.pageFlip) {
+                    const currentIndex = window.pageFlip.getCurrentPageIndex();
+                    const allPages = document.querySelectorAll('#book .page');
+                    let targetPage = allPages[currentIndex];
+                    if (targetPage && (targetPage.classList.contains('page-cover') || targetPage.classList.contains('dummy-page'))) {
+                        if (allPages[currentIndex + 1] && !allPages[currentIndex + 1].classList.contains('page-cover') && !allPages[currentIndex + 1].classList.contains('dummy-page')) {
+                            targetPage = allPages[currentIndex + 1];
+                        }
+                    }
+                    if (targetPage && !targetPage.classList.contains('page-cover') && !targetPage.classList.contains('dummy-page')) {
+                        this.openEditMode(targetPage);
+                    } else {
+                        alert("Lütfen düzenlemek için kapak dışında bir sayfa açın.");
+                    }
+                }
+            });
+        }
         document.getElementById('btn-finish-edit').addEventListener('click', () => {
             this.closeEditMode();
             this.switchPhase(1);
         });
+
+        const btnExportPdf = document.getElementById('menu-export-pdf');
+        if(btnExportPdf) {
+            btnExportPdf.addEventListener('click', () => {
+                const slot = document.getElementById('edit-page-slot');
+                if (slot && typeof html2pdf !== 'undefined') {
+                    const opt = {
+                        margin: 0,
+                        filename: 'Dijital-Ajanda-Sayfasi.pdf',
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true },
+                        jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                    };
+                    html2pdf().set(opt).from(slot).save();
+                }
+            });
+        }
+
+        const openCalBtn = document.getElementById('open-calendar-btn');
+        if (openCalBtn) {
+            openCalBtn.addEventListener('click', () => {
+                this.switchPhase(4);
+                this.renderCalendar();
+            });
+        }
+
+        const btnReturnCal = document.getElementById('btn-return-library-from-cal');
+        if (btnReturnCal) {
+            btnReturnCal.addEventListener('click', () => {
+                this.switchPhase(1);
+            });
+        }
+
+        const btnPrevMonth = document.getElementById('btn-prev-month');
+        if (btnPrevMonth) {
+            btnPrevMonth.addEventListener('click', () => {
+                this.currentCalDate.setMonth(this.currentCalDate.getMonth() - 1);
+                this.renderCalendar();
+            });
+        }
+
+        const btnNextMonth = document.getElementById('btn-next-month');
+        if (btnNextMonth) {
+            btnNextMonth.addEventListener('click', () => {
+                this.currentCalDate.setMonth(this.currentCalDate.getMonth() + 1);
+                this.renderCalendar();
+            });
+        }
         document.getElementById('btn-prev-edit-page').addEventListener('click', () => this.navigateToPage(-1));
         document.getElementById('btn-next-edit-page').addEventListener('click', () => this.navigateToPage(1));
         window.addEventListener('keydown', (e) => {
@@ -96,6 +171,13 @@ export const AppManager = {
         const sidebarAddPageBtn = document.getElementById('sidebar-add-page-btn');
         if(sidebarAddPageBtn) {
             sidebarAddPageBtn.addEventListener('click', () => {
+                this.openTemplateModal();
+            });
+        }
+        
+        const menuAddPage = document.getElementById('menu-add-page');
+        if(menuAddPage) {
+            menuAddPage.addEventListener('click', () => {
                 this.openTemplateModal();
             });
         }
@@ -170,6 +252,62 @@ export const AppManager = {
     },
 
     /**
+     * Takvim Oluşturma Motoru (Calendar Rendering)
+     */
+    renderCalendar() {
+        const grid = document.getElementById('calendar-days-grid');
+        const title = document.getElementById('calendar-month-year-title');
+        if (!grid || !title) return;
+
+        grid.innerHTML = '';
+        
+        const year = this.currentCalDate.getFullYear();
+        const month = this.currentCalDate.getMonth();
+        
+        const monthNames = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+        title.innerText = `${monthNames[month]} ${year}`;
+
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        // JS haftaya pazar(0) başlar, pazartesi(1) yapmak için offset
+        let startDayOffset = firstDay - 1;
+        if (startDayOffset < 0) startDayOffset = 6;
+
+        const today = new Date();
+        const isCurrentMonth = today.getFullYear() === year && today.getMonth() === month;
+
+        // Boş kutular
+        for (let i = 0; i < startDayOffset; i++) {
+            const emptyCell = document.createElement('div');
+            emptyCell.className = 'calendar-day empty';
+            grid.appendChild(emptyCell);
+        }
+
+        // Günler
+        for (let d = 1; d <= daysInMonth; d++) {
+            const cell = document.createElement('div');
+            cell.className = 'calendar-day';
+            cell.innerText = d;
+
+            if (isCurrentMonth && d === today.getDate()) {
+                cell.classList.add('today');
+            }
+
+            // Rastgele not noktası (Demo amaçlı)
+            if (Math.random() > 0.8) {
+                cell.classList.add('has-notes');
+            }
+
+            cell.addEventListener('click', () => {
+                alert(`${d} ${monthNames[month]} ${year} tarihi için günlük açılıyor... (Yakında eklenecek)`);
+            });
+
+            grid.appendChild(cell);
+        }
+    },
+
+    /**
      * Defterin ismini değiştirmek için açılan küçük kutucuğu (Modal) yönetir.
      * @param {Object} nb - İsmi değiştirilecek defter objesi
      */
@@ -217,10 +355,10 @@ export const AppManager = {
         const pattern = document.getElementById('notebook-pattern').value;
         const pages = [];
         for(let i = 1; i <= 2; i++) {
-            pages.push({ id: 'pg-' + crypto.randomUUID(), snapshot: null });
+            pages.push({ id: 'pg-' + (window.crypto && window.crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2)), snapshot: null });
         }
         const newNb = {
-            id: 'nb-' + crypto.randomUUID(),
+            id: 'nb-' + (window.crypto && window.crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2)),
             name: name,
             coverColor: color,
             pattern: pattern,
@@ -422,15 +560,30 @@ export const AppManager = {
         if(window.pageFlip) {
             window.pageFlip.destroy();
         }
+        
+        // PageFlip kütüphanesini dinamik boyutlandırmayla başlat
         window.pageFlip = new St.PageFlip(bookDiv, {
-            width: 450, height: 600, size: "stretch", 
-            minWidth: 300, maxWidth: 600, minHeight: 400, maxHeight: 800,
-            maxShadowOpacity: 0.5, showCover: true, mobileScrollSupport: true 
+            width: 500, 
+            height: 700, 
+            size: "stretch", 
+            minWidth: 300, 
+            maxWidth: 650, 
+            minHeight: 400, 
+            maxHeight: 850,
+            maxShadowOpacity: 0.5, 
+            showCover: true, 
+            mobileScrollSupport: true,
+            drawShadow: true
         });
-        window.pageFlip.loadFromHTML(bookDiv.querySelectorAll(".page"));
-        if (startPage > 0 && typeof window.pageFlip.turnToPage === 'function') {
-            window.pageFlip.turnToPage(startPage);
-        }
+        
+        // Sayfaları PageFlip'e yükle
+        requestAnimationFrame(() => {
+            window.pageFlip.loadFromHTML(bookDiv.querySelectorAll(".page"));
+            
+            if (startPage > 0 && typeof window.pageFlip.turnToPage === 'function') {
+                window.pageFlip.turnToPage(startPage);
+            }
+        });
         requestAnimationFrame(() => {
             setTimeout(() => {
                 if (window.drawingPad) {
@@ -459,6 +612,25 @@ export const AppManager = {
         }
         this.switchPhase(2);
         if (typeof lucide !== 'undefined') lucide.createIcons();
+    },
+    loadTheme() {
+        const savedTheme = localStorage.getItem('ajanda_theme') || 'dark';
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        this.updateThemeIcon(savedTheme);
+    },
+    toggleTheme() {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('ajanda_theme', newTheme);
+        this.updateThemeIcon(newTheme);
+    },
+    updateThemeIcon(theme) {
+        const btn = document.getElementById('theme-toggle-btn');
+        if (btn) {
+            btn.innerHTML = theme === 'dark' ? '<i data-lucide="sun"></i>' : '<i data-lucide="moon"></i>';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
     },
     /**
      * Sayfaların üzerine çift tıklandığında veya "Düzenle" butonuna basıldığında
@@ -598,7 +770,7 @@ export const AppManager = {
         if(window.pageFlip) {
             currentIndex = window.pageFlip.getCurrentPageIndex();
         }
-        const newPageId1 = 'pg-' + crypto.randomUUID();
+        const newPageId1 = 'pg-' + (window.crypto && window.crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2));
         nb.pages.push({ id: newPageId1, snapshot: null, bgImage: bgImage || '', pattern: pattern || '' });
         DatabaseManager.saveNotebooks(this.notebooks);
         if (this.currentPhase === 3) {

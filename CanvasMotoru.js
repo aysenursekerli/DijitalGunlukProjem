@@ -12,7 +12,6 @@ export class DrawingPad {
         this.size = 3;
         this.globalHistory = []; 
         this.currentStroke = null;
-        this.lastPoint = null;
         this.lastTime = null;
         this.zoomLevel = 1;
         this.pendingZoom = 1;
@@ -40,16 +39,26 @@ export class DrawingPad {
         const tools = document.querySelectorAll('.tool-btn:not(.danger):not(#undo-btn)');
         const colorPicker = document.getElementById('color-picker');
         const sizePicker = document.getElementById('size-picker');
-        const clearBtn = document.getElementById('clear-btn');
+        const clearBtn = document.getElementById('menu-clear-page');
         const undoBtn = document.getElementById('undo-btn');
         if(undoBtn) undoBtn.addEventListener('click', () => this.undo());
         tools.forEach(btn => {
-            btn.addEventListener('click', () => {
+            btn.addEventListener('click', (e) => {
                 if(!btn.dataset.tool) return; 
                 if(btn.parentElement.classList.contains('dropdown')) return; 
-                tools.forEach(t => t.classList.remove('active'));
-                btn.classList.add('active');
-                this.setMode(btn.dataset.tool);
+
+                const popup = document.getElementById('thickness-popup');
+                
+                if (btn.classList.contains('active') && ['pen', 'fountain', 'highlighter', 'eraser'].includes(btn.dataset.tool)) {
+                    popup.classList.toggle('active');
+                    const rect = btn.getBoundingClientRect();
+                    popup.style.left = rect.left + 'px';
+                } else {
+                    if(popup) popup.classList.remove('active');
+                    tools.forEach(t => t.classList.remove('active'));
+                    btn.classList.add('active');
+                    this.setMode(btn.dataset.tool);
+                }
             });
         });
         const colorButtons = document.querySelectorAll('.color-btn');
@@ -191,7 +200,6 @@ export class DrawingPad {
             ctx.lineCap = 'round';
             ctx.lineJoin = 'round';
             let actualLineWidth = stroke.normSize * canvas.width;
-            ctx.lineWidth = actualLineWidth;
             if (stroke.mode === 'eraser') {
                 ctx.globalCompositeOperation = 'destination-out';
                 ctx.lineWidth = actualLineWidth * 2;
@@ -380,6 +388,18 @@ export class DrawingPad {
                 this.hideTextFormattingMenu();
             });
         }
+        const formatBtns = document.querySelectorAll('.text-align-btn[data-format]');
+        formatBtns.forEach(btn => {
+            btn.addEventListener('mousedown', e => e.preventDefault());
+            btn.addEventListener('click', e => {
+                const format = e.target.closest('.text-align-btn').dataset.format;
+                document.execCommand(format, false, null);
+                if(window.currentTextMediaData && window.currentTextWrapper) {
+                    const textContent = window.currentTextWrapper.querySelector('.text-content');
+                    if(textContent) this.updateMediaData(window.currentTextMediaData.id, { content: textContent.innerHTML });
+                }
+            });
+        });
         document.addEventListener('pointerdown', (e) => {
             if(!e.target.closest('.transform-box') && !e.target.closest('.text-formatting-menu') && this.currentMode === 'hand') {
                 document.querySelectorAll('.transform-box').forEach(el => {
@@ -444,7 +464,7 @@ export class DrawingPad {
     addMediaToPage(mediaData, isInitialLoad = false) {
         if(!this.activePageContent) return; 
         if (!mediaData.id) {
-            mediaData.id = 'media-' + crypto.randomUUID();
+            mediaData.id = 'media-' + (window.crypto && window.crypto.randomUUID ? crypto.randomUUID() : Date.now().toString(36) + Math.random().toString(36).substr(2));
             mediaData.x = 50;
             mediaData.y = 50;
             mediaData.width = mediaData.width || 100;
@@ -488,6 +508,16 @@ export class DrawingPad {
                 <button class="layer-btn" data-action="front" title="Öne Getir"><i data-lucide="arrow-up-to-line"></i></button>
                 <button class="layer-btn" data-action="back" title="Arkaya Gönder"><i data-lucide="arrow-down-to-line"></i></button>
                 <button class="layer-btn delete-btn" data-action="delete" title="Sil"><i data-lucide="trash-2"></i></button>
+                ${mediaData.type === 'text' ? `
+                <div style="border-top:1px solid rgba(255,255,255,0.1); margin-top:2px; padding-top:2px;">
+                    <select class="layer-font-select" style="background:transparent; color:#fff; border:none; outline:none; font-size:11px; cursor:pointer; width:100%;">
+                        <option style="color:#000;" value="Inter" ${mediaData.fontStyle==='Inter'?'selected':''}>Klasik</option>
+                        <option style="color:#000;" value="cursive" ${mediaData.fontStyle==='cursive'?'selected':''}>El Yazısı</option>
+                        <option style="color:#000;" value="Georgia" ${mediaData.fontStyle==='Georgia'?'selected':''}>Serif</option>
+                        <option style="color:#000;" value="'Courier New'" ${mediaData.fontStyle==="'Courier New'"?'selected':''}>Daktilo</option>
+                    </select>
+                </div>
+                ` : ''}
             </div>
             <div class="rotate-handle" title="Döndür"><i data-lucide="rotate-cw"></i></div>
             <div class="resize-handle resize-nw" data-resize="nw"></div>
@@ -520,17 +550,29 @@ export class DrawingPad {
             textContent.addEventListener('blur', () => {
                 const zoomWrapper = document.getElementById('zoom-wrapper');
                 if(zoomWrapper) zoomWrapper.classList.remove('zoom-active');
-                this.updateMediaData(mediaData.id, { content: textContent.innerText });
+                this.updateMediaData(mediaData.id, { content: textContent.innerHTML });
                 this.hideTextFormattingMenu();
             });
         }
         const settingsToggle = wrapper.querySelector('.settings-toggle');
         const mediaControls = wrapper.querySelector('.media-controls');
-        if(settingsToggle && mediaControls) {
+        if (settingsToggle && mediaControls) {
             settingsToggle.addEventListener('pointerdown', (e) => {
                 e.stopPropagation();
                 mediaControls.classList.toggle('active');
             });
+            const layerFontSelect = wrapper.querySelector('.layer-font-select');
+            if (layerFontSelect) {
+                layerFontSelect.addEventListener('pointerdown', e => e.stopPropagation());
+                layerFontSelect.addEventListener('change', (e) => {
+                    const newFont = e.target.value;
+                    const textContent = wrapper.querySelector('.text-content');
+                    if (textContent) {
+                        textContent.style.fontFamily = newFont;
+                        this.updateMediaData(mediaData.id, { fontStyle: newFont });
+                    }
+                });
+            }
         }
         this.setupTransformEngine(wrapper, mediaData);
         if (!isInitialLoad) {
@@ -674,7 +716,7 @@ export class DrawingPad {
         if (!menu) return;
         const fontSelect = document.getElementById('text-font-style');
         const colorPicker = document.getElementById('text-color-picker');
-        const alignBtns = document.querySelectorAll('.text-align-btn');
+        const alignBtns = document.querySelectorAll('.text-align-btn[data-align]');
         fontSelect.value = mediaData.fontStyle || 'Inter';
         colorPicker.value = mediaData.textColor || '#333333';
         alignBtns.forEach(btn => btn.classList.remove('active'));
@@ -883,6 +925,7 @@ export class DrawingPad {
     stopDrawing() {
         if(!this.isDrawing) return;
         this.isDrawing = false;
+        
         if(this.currentStroke && this.currentStroke.points.length > 0) {
             this.globalHistory.push(this.currentStroke);
             const notebookId = this.currentStroke.notebookId;
