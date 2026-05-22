@@ -36,6 +36,11 @@ export class DrawingPad {
         this.activePageContent = null;
         this.isEditing = false;
         
+        // Notebook ve Text Formatting State
+        this.activeNotebookId = null;
+        this.currentTextMediaData = null;
+        this.currentTextWrapper = null;
+        
         // Lasso Kırpma (Crop) Durum Değişkenleri
         this.isCroppingMode = false;
         this.lassoPath = [];
@@ -44,6 +49,31 @@ export class DrawingPad {
         this.initToolbar();
         this.initZoomLogic();
         this.setupMediaManager();
+        
+        // CustomEvent Dinleyicileri (Gevşek Bağımlılık)
+        document.addEventListener('memori:page-flipped', (e) => {
+            const pages = e.detail.pages;
+            if(pages) {
+                pages.forEach(page => {
+                    const canvas = page.querySelector('.drawing-layer');
+                    if (canvas) {
+                        this.resizeCanvas(canvas);
+                        this.redrawCanvas(canvas);
+                    }
+                });
+            }
+        });
+
+        document.addEventListener('memori:edit-mode-entered', (e) => {
+            this.activeNotebookId = e.detail.notebookId;
+            this.attachToSinglePage(e.detail.canvas, e.detail.pageContent);
+        });
+
+        document.addEventListener('memori:edit-mode-exited', () => {
+            this.detachSinglePage();
+            this.activeNotebookId = null;
+        });
+
         window.addEventListener('resize', () => {
              if(this.isEditing && this.activeCanvas) {
                 this.resizeCanvas(this.activeCanvas);
@@ -107,11 +137,11 @@ export class DrawingPad {
                 return;
             }
             const pageId = this.activeCanvas.dataset.page;
-            const notebookId = this.getActiveNotebookId();
+            const notebookId = this.activeNotebookId;
             this.globalHistory = this.globalHistory.filter(s => !(s.notebookId === notebookId && s.pageId === pageId));
             DatabaseManager.syncDrawings(notebookId, pageId, this.globalHistory);
             this.redrawCanvas(this.activeCanvas);
-            if(this.onRenderSidebar) this.onRenderSidebar();
+            document.dispatchEvent(new CustomEvent('memori:drawings-updated'));
         });
     }
 
@@ -141,13 +171,17 @@ export class DrawingPad {
         this.setEditingState(true);
         pageContent.querySelectorAll('.static-media').forEach(el => el.remove());
         const pageId = canvas.dataset.page;
-        const nb = this.getAppNotebooks().find(n => n.id === this.getActiveNotebookId());
-        if(nb) {
-            const page = nb.pages.find(p => p.id === pageId);
-            if(page && page.media) {
-                page.media.forEach(m => this.addMediaToPage(m, true));
+        document.dispatchEvent(new CustomEvent('memori:request-media-load', {
+            detail: { 
+                notebookId: this.activeNotebookId, 
+                pageId: pageId, 
+                callback: (mediaList) => {
+                    if (mediaList) {
+                        mediaList.forEach(m => this.addMediaToPage(m, true));
+                    }
+                }
             }
-        }
+        }));
     }
 
     /**
@@ -199,7 +233,7 @@ export class DrawingPad {
             return;
         }
         const pageId = this.activeCanvas.dataset.page;
-        const notebookId = this.getActiveNotebookId();
+        const notebookId = this.activeNotebookId;
         for(let i = this.globalHistory.length -1; i >= 0; i--) {
             const stroke = this.globalHistory[i];
             if(stroke.notebookId === notebookId && stroke.pageId === pageId) {
@@ -209,7 +243,7 @@ export class DrawingPad {
         }
         DatabaseManager.syncDrawings(notebookId, pageId, this.globalHistory);
         requestAnimationFrame(() => this.redrawCanvas(this.activeCanvas));
-        if(this.onRenderSidebar) this.onRenderSidebar();
+        document.dispatchEvent(new CustomEvent('memori:drawings-updated'));
     }
 
     /**
@@ -228,7 +262,7 @@ export class DrawingPad {
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height); 
         const pageId = canvas.dataset.page;
-        const notebookId = this.getActiveNotebookId();
+        const notebookId = this.activeNotebookId;
         const strokes = this.globalHistory.filter(s => s.notebookId === notebookId && s.pageId === pageId);
         strokes.forEach(stroke => {
             if (stroke.points.length === 0) return;
@@ -359,15 +393,16 @@ export class DrawingPad {
                 if(file) {
                     const reader = new FileReader();
                     reader.onload = (event) => {
-                        if (typeof window.promptImageCrop === 'function') {
-                            window.promptImageCrop(event.target.result, (croppedSrc) => {
-                                if (croppedSrc) {
-                                    this.addMediaToPage({ type: 'image', content: croppedSrc, width: 200, height: 200 });
+                        document.dispatchEvent(new CustomEvent('memori:request-crop', {
+                            detail: {
+                                imageSrc: event.target.result,
+                                callback: (croppedSrc) => {
+                                    if (croppedSrc) {
+                                        this.addMediaToPage({ type: 'image', content: croppedSrc, width: 200, height: 200 });
+                                    }
                                 }
-                            });
-                        } else {
-                            this.addMediaToPage({ type: 'image', content: event.target.result, width: 200, height: 200 });
-                        }
+                            }
+                        }));
                     };
                     reader.readAsDataURL(file);
                 }
@@ -425,9 +460,9 @@ export class DrawingPad {
             btn.addEventListener('click', e => {
                 const format = e.target.closest('.text-align-btn').dataset.format;
                 document.execCommand(format, false, null);
-                if(window.currentTextMediaData && window.currentTextWrapper) {
-                    const textContent = window.currentTextWrapper.querySelector('.text-content');
-                    if(textContent) this.updateMediaData(window.currentTextMediaData.id, { content: textContent.innerHTML });
+                if(this.currentTextMediaData && this.currentTextWrapper) {
+                    const textContent = this.currentTextWrapper.querySelector('.text-content');
+                    if(textContent) this.updateMediaData(this.currentTextMediaData.id, { content: textContent.innerHTML });
                 }
             });
         });
@@ -751,25 +786,18 @@ export class DrawingPad {
         });
     }
     saveMediaToDB(mediaData) {
-        if (!this.getActiveNotebookId() || !this.activeCanvas) return;
+        if (!this.activeNotebookId || !this.activeCanvas) return;
         const pageId = this.activeCanvas.dataset.page;
-        const nb = this.getAppNotebooks().find(n => n.id === this.getActiveNotebookId());
-        if(!nb) return;
-        const page = nb.pages.find(p => p.id === pageId);
-        if(!page) return;
-        if(!page.media) page.media = [];
-        page.media.push(mediaData);
-        DatabaseManager.saveNotebooks(this.getAppNotebooks());
+        document.dispatchEvent(new CustomEvent('memori:media-updated', {
+            detail: { notebookId: this.activeNotebookId, pageId: pageId, mediaData: mediaData, action: 'add' }
+        }));
     }
     deleteMediaFromDB(mediaId) {
-        if (!this.getActiveNotebookId() || !this.activeCanvas) return;
+        if (!this.activeNotebookId || !this.activeCanvas) return;
         const pageId = this.activeCanvas.dataset.page;
-        const nb = this.getAppNotebooks().find(n => n.id === this.getActiveNotebookId());
-        if(!nb) return;
-        const page = nb.pages.find(p => p.id === pageId);
-        if(!page || !page.media) return;
-        page.media = page.media.filter(m => m.id !== mediaId);
-        DatabaseManager.saveNotebooks(this.getAppNotebooks());
+        document.dispatchEvent(new CustomEvent('memori:media-updated', {
+            detail: { notebookId: this.activeNotebookId, pageId: pageId, mediaId: mediaId, action: 'delete' }
+        }));
     }
     showTextFormattingMenu(textWrapper, mediaData) {
         const menu = document.getElementById('text-formatting-menu');
@@ -791,8 +819,8 @@ export class DrawingPad {
         alignBtns.forEach(btn => {
             btn.removeEventListener('click', alignBtnHandler);
         });
-        window.currentTextMediaData = mediaData;
-        window.currentTextWrapper = textWrapper;
+        this.currentTextMediaData = mediaData;
+        this.currentTextWrapper = textWrapper;
         const fontSelectHandler = () => {
             const newFont = fontSelect.value;
             const textContent = textWrapper.querySelector('.text-content');
@@ -832,17 +860,11 @@ export class DrawingPad {
         }
     }
     updateMediaData(mediaId, updates) {
-        if (!this.getActiveNotebookId() || !this.activeCanvas) return;
+        if (!this.activeNotebookId || !this.activeCanvas) return;
         const pageId = this.activeCanvas.dataset.page;
-        const nb = this.getAppNotebooks().find(n => n.id === this.getActiveNotebookId());
-        if(!nb) return;
-        const page = nb.pages.find(p => p.id === pageId);
-        if(!page || !page.media) return;
-        const media = page.media.find(m => m.id === mediaId);
-        if(media) {
-            Object.assign(media, updates);
-            DatabaseManager.saveNotebooks(this.getAppNotebooks());
-        }
+        document.dispatchEvent(new CustomEvent('memori:media-updated', {
+            detail: { notebookId: this.activeNotebookId, pageId: pageId, mediaId: mediaId, updates: updates, action: 'update' }
+        }));
     }
     resizeCanvas(canvas) {
         const rect = canvas.parentElement.getBoundingClientRect();
@@ -884,7 +906,7 @@ export class DrawingPad {
         const unY = Math.min(Math.max(0, (e.clientY - rect.top) / rect.height), 1);
         let cColor = this.color;
         const pageId = canvas.dataset.page;
-        const notebookId = this.getActiveNotebookId();
+        const notebookId = this.activeNotebookId;
         this.currentStroke = {
             mode: this.currentMode,
             color: cColor,
@@ -1036,7 +1058,7 @@ export class DrawingPad {
             const notebookId = this.currentStroke.notebookId;
             const pageId = this.currentStroke.pageId;
             DatabaseManager.syncDrawings(notebookId, pageId, this.globalHistory);
-            if(this.onRenderSidebar) this.onRenderSidebar();
+            document.dispatchEvent(new CustomEvent('memori:drawings-updated'));
         }
         this.currentStroke = null;
     }
@@ -1100,21 +1122,12 @@ export class DrawingPad {
             return;
         }
         
-        const notebookId = this.getActiveNotebookId();
-        const pageId = this.activeCanvas.dataset.page;
-        const nb = this.getAppNotebooks().find(n => n.id === notebookId);
-        const page = nb?.pages.find(p => p.id === pageId);
-        const mediaData = page?.media.find(m => m.id === this.targetMediaToCrop);
-        
-        if (!mediaData) {
-            this.exitCroppingMode();
-            return;
-        }
+        const rotationStr = elem.style.transform.match(/rotate\(([-\d.]+)deg\)/);
+        const rotation = rotationStr ? parseFloat(rotationStr[1]) : 0;
 
         // Calculate center of image in canvas coordinates
         const centerX = elem.offsetLeft + elem.offsetWidth / 2;
         const centerY = elem.offsetTop + elem.offsetHeight / 2;
-        const rotation = mediaData.rotation || 0;
         const theta = -rotation * Math.PI / 180;
 
         const polygonPoints = this.lassoPath.map(pt => {

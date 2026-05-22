@@ -48,9 +48,9 @@ export const AppManager = {
                 this.notebooks = savedNotebooks;
             }
             this.renderLibrary();
-            if (window.drawingPad) {
+            if (AppManager.drawingPad) {
                 const savedDrawings = await DatabaseManager.loadDrawings();
-                window.drawingPad.globalHistory = savedDrawings || [];
+                AppManager.drawingPad.globalHistory = savedDrawings || [];
             }
         }).catch(err => {
             console.error('Database initialization failed:', err);
@@ -125,14 +125,12 @@ export const AppManager = {
             });
         }
 
-        const pixabaySearchBtn = document.getElementById('pixabay-search-btn');
         const pixabaySearchInput = document.getElementById('pixabay-search');
-        if (pixabaySearchBtn && pixabaySearchInput) {
+        if (pixabaySearchInput) {
             const doSearch = () => {
                 const query = pixabaySearchInput.value.trim() || 'aesthetic sticker illustration';
                 this.fetchPixabayStickers(query);
             };
-            pixabaySearchBtn.addEventListener('click', doSearch);
             pixabaySearchInput.addEventListener('keypress', (e) => {
                 if (e.key === 'Enter') doSearch();
             });
@@ -141,8 +139,8 @@ export const AppManager = {
         const btnUnlockAll = document.getElementById('btn-unlock-all');
         if (btnUnlockAll) {
             btnUnlockAll.addEventListener('click', () => {
-                if (window.drawingPad) {
-                    const count = window.drawingPad.unlockAllMediaOnPage();
+                if (AppManager.drawingPad) {
+                    const count = AppManager.drawingPad.unlockAllMediaOnPage();
                     if (count > 0) {
                         alert(`${count} adet katmanın kilidi açıldı!`);
                     } else {
@@ -230,7 +228,7 @@ export const AppManager = {
         document.getElementById('btn-prev-edit-page').addEventListener('click', () => this.navigateToPage(-1));
         document.getElementById('btn-next-edit-page').addEventListener('click', () => this.navigateToPage(1));
         window.addEventListener('keydown', (e) => {
-            if(this.currentPhase === 3 && window.drawingPad && window.drawingPad.currentMode === 'hand') {
+            if(this.currentPhase === 3 && AppManager.drawingPad && AppManager.drawingPad.currentMode === 'hand') {
                 if(e.key === 'ArrowLeft') this.navigateToPage(-1);
                 if(e.key === 'ArrowRight') this.navigateToPage(1);
             }
@@ -666,27 +664,19 @@ export const AppManager = {
         });
         requestAnimationFrame(() => {
             setTimeout(() => {
-                if (window.drawingPad) {
-                    bookDiv.querySelectorAll('.drawing-layer').forEach(canvas => {
-                        window.drawingPad.resizeCanvas(canvas);
-                        window.drawingPad.redrawCanvas(canvas);
-                    });
-                }
+                const pages = bookDiv.querySelectorAll('.page');
+                document.dispatchEvent(new CustomEvent('memori:page-flipped', {
+                    detail: { pages: Array.from(pages) }
+                }));
             }, 150);
         });
         if (window.pageFlip) {
             window.pageFlip.on('flip', (data) => {
                 setTimeout(() => {
-                    if (window.drawingPad) {
-                        const pages = bookDiv.querySelectorAll('.page');
-                        pages.forEach(page => {
-                            const canvas = page.querySelector('.drawing-layer');
-                            if (canvas) {
-                                window.drawingPad.resizeCanvas(canvas);
-                                window.drawingPad.redrawCanvas(canvas);
-                            }
-                        });
-                    }
+                    const pages = bookDiv.querySelectorAll('.page');
+                    document.dispatchEvent(new CustomEvent('memori:page-flipped', {
+                        detail: { pages: Array.from(pages) }
+                    }));
                 }, 50);
             });
         }
@@ -883,8 +873,8 @@ export const AppManager = {
         if(phase === 2) {
             DatabaseManager.saveNotebooks(this.notebooks);
         }
-        if(window.drawingPad) {
-            window.drawingPad.setEditingState(phase === 3);
+        if(AppManager.drawingPad) {
+            AppManager.drawingPad.setEditingState(phase === 3);
         }
     },
     /**
@@ -915,9 +905,15 @@ export const AppManager = {
         slot.appendChild(canvas);
         if(this.currentPhase !== 3) this.switchPhase(3);
         setTimeout(() => {
-            if(window.drawingPad) {
-                window.drawingPad.attachToSinglePage(canvas, pageContent);
-                window.drawingPad.refreshAllCanvasesForZoom();
+            document.dispatchEvent(new CustomEvent('memori:edit-mode-entered', {
+                detail: {
+                    notebookId: AppManager.activeNotebookId,
+                    canvas: canvas,
+                    pageContent: pageContent
+                }
+            }));
+            if(AppManager.drawingPad) {
+                AppManager.drawingPad.refreshAllCanvasesForZoom();
             }
         }, 10);
         this.renderSidebar();
@@ -966,9 +962,7 @@ export const AppManager = {
             parent.appendChild(canvas);
             const slot = document.getElementById('edit-page-slot');
             slot.className = 'fullscreen-canvas-wrapper';
-            if(window.drawingPad) {
-                window.drawingPad.detachSinglePage();
-            }
+            document.dispatchEvent(new CustomEvent('memori:edit-mode-exited'));
             this.activePageData = null;
         }
         if(!skipPhaseSwitch) {
@@ -977,20 +971,20 @@ export const AppManager = {
                 setTimeout(() => {
                     const book = document.getElementById('book');
                     const nb = this.notebooks.find(n => n.id === this.activeNotebookId);
-                    if (book && window.drawingPad && nb) {
+                    if (book && AppManager.drawingPad && nb) {
                         book.querySelectorAll('.drawing-layer').forEach(c => {
-                            window.drawingPad.resizeCanvas(c);
-                            window.drawingPad.redrawCanvas(c);
+                            AppManager.drawingPad.resizeCanvas(c);
+                            AppManager.drawingPad.redrawCanvas(c);
                         });
                         if (window.pageFlip && typeof window.pageFlip.loadFromHTML === 'function') {
                             const pages = book.querySelectorAll('.page');
                             window.pageFlip.loadFromHTML(pages);
                         }
                         nb.pages.forEach(pageObj => {
-                            const pageDrawings = window.drawingPad.globalHistory.filter(
+                            const pageDrawings = AppManager.drawingPad.globalHistory.filter(
                                 d => d.notebookId === this.activeNotebookId && d.pageId === pageObj.id
                             );
-                            DatabaseManager.syncDrawings(this.activeNotebookId, pageObj.id, window.drawingPad.globalHistory);
+                            DatabaseManager.syncDrawings(this.activeNotebookId, pageObj.id, AppManager.drawingPad.globalHistory);
                         });
                     }
                     DatabaseManager.saveNotebooks(this.notebooks);
@@ -1025,8 +1019,8 @@ export const AppManager = {
                     item.className = 'pixabay-item';
                     item.innerHTML = `<img src="${hit.webformatURL}" alt="${hit.tags}">`;
                     item.addEventListener('click', () => {
-                        if (window.drawingPad) {
-                            window.drawingPad.addMediaToPage({ type: 'image', content: hit.webformatURL, width: 200, height: 200 });
+                        if (AppManager.drawingPad) {
+                            AppManager.drawingPad.addMediaToPage({ type: 'image', content: hit.webformatURL, width: 200, height: 200 });
                             const rightSidebar = document.getElementById('right-sidebar');
                             if(rightSidebar) rightSidebar.classList.remove('active');
                         }
@@ -1129,9 +1123,9 @@ export const AppManager = {
             miniCanvas.style.width = '100%';
             miniCanvas.style.height = '100%';
             previewDiv.appendChild(miniCanvas);
-            if (window.drawingPad && window.drawingPad.globalHistory) {
+            if (AppManager.drawingPad && AppManager.drawingPad.globalHistory) {
                 const ctx = miniCanvas.getContext('2d');
-                const strokes = window.drawingPad.globalHistory.filter(s => s.notebookId === nb.id && s.pageId === pageObj.id);
+                const strokes = AppManager.drawingPad.globalHistory.filter(s => s.notebookId === nb.id && s.pageId === pageObj.id);
                 strokes.forEach(stroke => {
                     if (stroke.points.length === 0) return;
                     ctx.beginPath();
@@ -1175,8 +1169,8 @@ export const AppManager = {
                     return;
                 }
                 nb.pages.splice(index, 1);
-                if (window.drawingPad) {
-                    window.drawingPad.globalHistory = window.drawingPad.globalHistory.filter(s => !(s.notebookId === nb.id && s.pageId === pageObj.id));
+                if (AppManager.drawingPad) {
+                    AppManager.drawingPad.globalHistory = AppManager.drawingPad.globalHistory.filter(s => !(s.notebookId === nb.id && s.pageId === pageObj.id));
                     DatabaseManager.syncDrawings(nb.id, pageObj.id, []);
                 }
                 DatabaseManager.saveNotebooks(this.notebooks);
@@ -1220,18 +1214,56 @@ export const AppManager = {
     }
 };
 document.addEventListener('DOMContentLoaded', async function() {
-    window.drawingPad = new DrawingPad();
-    window.drawingPad.getAppNotebooks = () => AppManager.notebooks;
-    window.drawingPad.getActiveNotebookId = () => AppManager.activeNotebookId;
-    window.drawingPad.onRenderSidebar = () => AppManager.renderSidebar();
+    AppManager.drawingPad = new DrawingPad();
+    
+    document.addEventListener('memori:drawings-updated', () => {
+        AppManager.renderSidebar();
+    });
+
+    document.addEventListener('memori:request-media-load', (e) => {
+        const { notebookId, pageId, callback } = e.detail;
+        const nb = AppManager.notebooks.find(n => n.id === notebookId);
+        if (nb) {
+            const page = nb.pages.find(p => p.id === pageId);
+            if (page && page.media) {
+                callback(page.media);
+            }
+        }
+    });
+
+    document.addEventListener('memori:media-updated', (e) => {
+        const { notebookId, pageId, mediaData, mediaId, updates, action } = e.detail;
+        const nb = AppManager.notebooks.find(n => n.id === notebookId);
+        if (!nb) return;
+        const page = nb.pages.find(p => p.id === pageId);
+        if (!page) return;
+        
+        if (!page.media) page.media = [];
+        
+        if (action === 'add') {
+            page.media.push(mediaData);
+        } else if (action === 'delete') {
+            page.media = page.media.filter(m => m.id !== mediaId);
+        } else if (action === 'update') {
+            const media = page.media.find(m => m.id === mediaId);
+            if (media) Object.assign(media, updates);
+        }
+        DatabaseManager.saveNotebooks(AppManager.notebooks);
+    });
+
+    document.addEventListener('memori:request-crop', (e) => {
+        if (AppManager.promptImageCrop) {
+            AppManager.promptImageCrop(e.detail.imageSrc, e.detail.callback);
+        }
+    });
     
     await DatabaseManager.init();
     AppManager.init();
 });
 
 
-// Global Resim Kırpma Fonksiyonu
-window.promptImageCrop = function(imageSrc, callback) {
+// Modül İçi Resim Kırpma Fonksiyonu
+AppManager.promptImageCrop = function(imageSrc, callback) {
     const modal = document.getElementById('image-crop-modal');
     const cropperImage = document.getElementById('cropper-image');
     const cancelBtn = document.getElementById('crop-cancel-btn');

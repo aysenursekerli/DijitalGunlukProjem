@@ -1,6 +1,6 @@
-# 📓 Memori: OmniPlanner - Nesne Yönelimli ve Yapay Zeka Destekli Dijital Ajanda
+# 📓 Memori- Dijital Ajanda
 
-**Memori: OmniPlanner**, geleneksel web tabanlı not defterlerinin sunduğu yüzeysel çözümlerin ötesine geçerek; modern web teknolojilerini **(PWA, HTML5 Canvas API, IndexedDB)** güçlü bir yazılım mimarisiyle harmanlayan akademik düzeyde bir dijital ajanda projesidir. 
+**Memori**, geleneksel web tabanlı not defterlerinin sunduğu yüzeysel çözümlerin ötesine geçerek; modern web teknolojilerini **(PWA, HTML5 Canvas API, IndexedDB)** güçlü bir yazılım mimarisiyle harmanlayan akademik düzeyde bir dijital ajanda projesidir. 
 
 Bu proje, karmaşık çizim ve katman (layer) işlemlerini pürüzsüz bir "3D Sayfa Çevirme" deneyimiyle birleştirir. Temel amacı, kullanıcılara sanki fiziksel bir deftere yazıyormuş hissini %100 çevrimdışı (offline-first) çalışabilen, yüksek performanslı ve nesne yönelimli (OOP) bir ekosistem içerisinde sunmaktır.
 
@@ -57,6 +57,6 @@ Proje geliştirme sürecinde, hem donanım/tarayıcı kısıtlamalarından hem d
 
 ## 🚀 Gelecek Vizyonu
 
-Memori: OmniPlanner projesinin mevcut web mimarisi (HTML5, CSS3, ES6 JS, IndexedDB) oldukça esnek, asenkron ve modüler bir temel üzerine oturtulmuştur. 
+Memori: Dijital Ajanda projesinin mevcut web mimarisi (HTML5, CSS3, ES6 JS, IndexedDB) oldukça esnek, asenkron ve modüler bir temel üzerine oturtulmuştur. 
 
 Gelecekteki temel vizyonumuz; bu web tabanlı PWA altyapısındaki iş kurallarını (Business Logic) koruyarak projeyi **Flutter** veya **React Native** teknolojileri kullanılarak tam yerel (Native) bir mobil iOS/Android uygulamasına dönüştürmektir. Böylelikle tabletlerde (örneğin iPad ve Apple Pencil entegrasyonuyla) daha derin donanımsal çizim ivmelenmelerine ve basınç hassasiyetine erişim sağlanacaktır.
