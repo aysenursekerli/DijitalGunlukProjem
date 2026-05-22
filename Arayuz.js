@@ -257,15 +257,11 @@ export const AppManager = {
         }
         setTimeout(() => {
             const splash = document.getElementById('splash-screen');
-            const appContainer = document.getElementById('app-container');
-            if (appContainer) {
-                appContainer.style.display = 'block';
-            }
             if(splash) {
                 splash.style.opacity = '0';
-                setTimeout(() => splash.style.display = 'none', 800);
+                setTimeout(() => splash.style.display = 'none', 500);
             }
-        }, 2500);
+        }, 1500);
     },
 
     /**
@@ -1031,6 +1027,8 @@ export const AppManager = {
                     item.addEventListener('click', () => {
                         if (window.drawingPad) {
                             window.drawingPad.addMediaToPage({ type: 'image', content: hit.webformatURL, width: 200, height: 200 });
+                            const rightSidebar = document.getElementById('right-sidebar');
+                            if(rightSidebar) rightSidebar.classList.remove('active');
                         }
                     });
                     grid.appendChild(item);
