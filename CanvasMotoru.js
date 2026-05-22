@@ -18,6 +18,21 @@ export class DrawingPad {
         this.draftCanvas = document.createElement('canvas');
         this.draftCtx = this.draftCanvas.getContext('2d', { willReadFrequently: true });
         this.activeCanvas = null;
+        
+        // Araç bazlı kalınlık seviyeleri (thin, medium, thick)
+        this.toolThicknessLevels = {
+            'pen': { thin: 2, medium: 4, thick: 6 },
+            'highlighter': { thin: 10, medium: 16, thick: 24 },
+            'eraser': { thin: 20, medium: 35, thick: 50 }
+        };
+        // Hangi aracın hangi kalınlıkta kaldığını hatırla
+        this.currentToolThickness = {
+            'pen': 'medium',
+            'highlighter': 'medium',
+            'eraser': 'medium'
+        };
+        this.activeTool = 'pen';
+
         this.activePageContent = null;
         this.isEditing = false;
         
@@ -148,6 +163,21 @@ export class DrawingPad {
         const zoomWrapper = document.getElementById('zoom-wrapper');
         if(zoomWrapper) zoomWrapper.style.transform = `scale(1)`;
         this.activeCanvas = null;
+        
+        // Araç bazlı kalınlık seviyeleri (thin, medium, thick)
+        this.toolThicknessLevels = {
+            'pen': { thin: 2, medium: 4, thick: 6 },
+            'highlighter': { thin: 10, medium: 16, thick: 24 },
+            'eraser': { thin: 20, medium: 35, thick: 50 }
+        };
+        // Hangi aracın hangi kalınlıkta kaldığını hatırla
+        this.currentToolThickness = {
+            'pen': 'medium',
+            'highlighter': 'medium',
+            'eraser': 'medium'
+        };
+        this.activeTool = 'pen';
+
         this.activePageContent = null;
         this.setEditingState(false);
     }
@@ -219,6 +249,7 @@ export class DrawingPad {
                 ctx.globalCompositeOperation = 'source-over';
                 ctx.strokeStyle = stroke.color;
                 ctx.globalAlpha = 1;
+                ctx.lineWidth = actualLineWidth;
             }
             const startX = stroke.points[0].x * canvas.width;
             const startY = stroke.points[0].y * canvas.height;
@@ -327,9 +358,21 @@ export class DrawingPad {
                 const file = e.target.files[0];
                 if(file) {
                     const reader = new FileReader();
-                    reader.onload = (event) => this.addMediaToPage({ type: 'image', content: event.target.result, width: 200, height: 200 });
+                    reader.onload = (event) => {
+                        if (typeof window.promptImageCrop === 'function') {
+                            window.promptImageCrop(event.target.result, (croppedSrc) => {
+                                if (croppedSrc) {
+                                    this.addMediaToPage({ type: 'image', content: croppedSrc, width: 200, height: 200 });
+                                }
+                            });
+                        } else {
+                            this.addMediaToPage({ type: 'image', content: event.target.result, width: 200, height: 200 });
+                        }
+                    };
                     reader.readAsDataURL(file);
                 }
+                // Aynı dosyanın üst üste seçilebilmesi için input değerini sıfırla
+                uploadInput.value = '';
             });
         }
         document.querySelectorAll('.sticker-btn').forEach(btn => {
@@ -339,25 +382,7 @@ export class DrawingPad {
                 this.addMediaToPage({ type: 'sticker', content: emoji, width: 100, height: 100 });
             });
         });
-        const stickerModal = document.getElementById('sticker-modal');
-        const stickerBtn = document.getElementById('sticker-popup-btn');
-        const closeStickerBtn = document.getElementById('close-sticker-btn');
-        if(stickerBtn) {
-            stickerBtn.addEventListener('click', () => {
-                stickerModal.classList.add('active');
-                this.renderStickerLibrary('general');
-            });
-        }
-        if(closeStickerBtn) {
-            closeStickerBtn.addEventListener('click', () => stickerModal.classList.remove('active'));
-        }
-        document.querySelectorAll('[data-sticker-tab]').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('[data-sticker-tab]').forEach(t => t.classList.remove('active'));
-                tab.classList.add('active');
-                this.renderStickerLibrary(tab.dataset.stickerTab);
-            });
-        });
+        // Sticker modal kaldırıldı - emojiler dropdown'da, çıkartmalar sağ panelde
         const btnAddText = document.getElementById('btn-add-text');
         if (btnAddText) {
             btnAddText.addEventListener('click', () => {
@@ -423,42 +448,6 @@ export class DrawingPad {
         });
     }
 
-    /**
-     * Sticker (Çıkartma) menüsü açıldığında, seçilen kategoriye (Doğa, Okul vb.) göre
-     * içindeki emojileri/resimleri arayüze dizer.
-     * @param {string} category - Gösterilecek çıkartma kategorisi
-     */
-    renderStickerLibrary(category) {
-        const grid = document.getElementById('sticker-library-grid');
-        if(!grid) return;
-        grid.innerHTML = '';
-        const stickerData = {
-            general: ['🐱', '🐶', '🦊', '🐨', '🦁', '🐷', '🦄', '🐝', '🦋', '🐳'],
-            nature: ['🌸', '🌻', '🌲', '🍀', '🍂', '🍄', '🌍', '🌙', '☀️', '🌊'],
-            school: ['📚', '✏️', '🎨', '🎓', '🎒', '🔬', '📐', '🖍️', '📖', '💻'],
-            custom: ['stecerlar/1.jpg', 'stecerlar/2.jpg', 'stecerlar/3.jpg', 'stecerlar/4.jpg', 'stecerlar/5.jpg', 'stecerlar/6.jpg', 'stecerlar/7.jpg', 'stecerlar/8.jpg', 'stecerlar/9.jpg', 'stecerlar/10.jpg', 'stecerlar/11.jpg']
-        };
-        const items = stickerData[category] || [];
-        items.forEach(emoji => {
-            const item = document.createElement('div');
-            item.className = 'sticker-item';
-            const isImage = emoji.includes('.jpg') || emoji.includes('.png');
-            if (isImage) {
-                item.innerHTML = `<img src="${emoji}" style="width:100%; height:100%; object-fit:contain;">`;
-            } else {
-                item.innerHTML = emoji;
-            }
-            item.addEventListener('click', () => {
-                if (isImage) {
-                    this.addMediaToPage({ type: 'image', content: emoji, width: 120, height: 120 });
-                } else {
-                    this.addMediaToPage({ type: 'sticker', content: emoji, width: 100, height: 100 });
-                }
-                document.getElementById('sticker-modal').classList.remove('active');
-            });
-            grid.appendChild(item);
-        });
-    }
 
     /**
      * Sayfaya yeni bir medya objesi (Yazı kutusu, Sticker, Resim veya Şekil) ekler.
@@ -508,7 +497,8 @@ export class DrawingPad {
         } else if (mediaData.type === 'sticker') {
             innerHTML = `<div class="media-content"><div class="sticker" style="font-size: ${mediaData.width/20}rem;">${mediaData.content}</div></div>`;
         } else if (mediaData.type === 'image') {
-            innerHTML = `<div class="media-content"><img src="${mediaData.content}"></div>`;
+            const clipStyle = mediaData.clipPath ? `style="clip-path: ${mediaData.clipPath};"` : '';
+            innerHTML = `<div class="media-content"><img src="${mediaData.content}" ${clipStyle}></div>`;
         }
         wrapper.innerHTML = `
             <div class="settings-toggle" title="Katman Ayarları"><i data-lucide="more-vertical"></i></div>
@@ -517,7 +507,10 @@ export class DrawingPad {
                 <button class="layer-btn" data-action="back" title="Arkaya Gönder"><i data-lucide="arrow-down-to-line"></i></button>
                 <button class="layer-btn lock-btn" data-action="lock" title="Kilitle" style="color:#eab308;"><i data-lucide="lock"></i></button>
                 <button class="layer-btn delete-btn" data-action="delete" title="Sil"><i data-lucide="trash-2"></i></button>
-                ${mediaData.type === 'image' ? `<button class="layer-btn crop-btn" data-action="crop" title="Serbest Kırp (Lasso)"><i data-lucide="scissors"></i></button>` : ''}
+                ${mediaData.type === 'image' ? `
+                <button class="layer-btn crop-btn" data-action="crop" title="Kement Kırpma (Lasso)" style="color:#22d3ee;"><i data-lucide="scissors"></i></button>
+                <button class="layer-btn reset-crop-btn" data-action="reset-crop" title="Kırpmayı Sıfırla" style="color:#f43f5e;"><i data-lucide="refresh-cw"></i></button>
+                ` : ''}
                 ${mediaData.type === 'text' ? `
                 <div style="border-top:1px solid rgba(255,255,255,0.1); margin-top:4px; padding-top:4px; display:flex; flex-direction:column; gap:6px;">
                     <select class="layer-font-select" style="background:var(--surface); color:var(--text); border:1px solid var(--border); border-radius:4px; padding:4px; font-size:12px; outline:none; cursor:pointer; width:100%;">
@@ -660,6 +653,14 @@ export class DrawingPad {
                     this.updateMediaData(elem.dataset.id, { isLocked: true });
                 } else if(action === 'crop') {
                     this.startCroppingMode(elem.dataset.id);
+                } else if(action === 'rect-crop') {
+                    this.startRectCropMode(elem.dataset.id);
+                } else if(action === 'reset-crop') {
+                    const img = elem.querySelector('img');
+                    if(img) {
+                        img.style.clipPath = '';
+                    }
+                    this.updateMediaData(elem.dataset.id, { clipPath: '' });
                 }
             });
         }
@@ -857,155 +858,22 @@ export class DrawingPad {
         }
     }
     
-    startCroppingMode(mediaId) {
-        this.isCroppingMode = true;
-        this.targetMediaToCrop = mediaId;
-        this.lassoPath = [];
-        if(this.activePageContent) {
-            this.activePageContent.querySelectorAll('.transform-box').forEach(el => el.classList.remove('selected'));
-        }
-        if(this.activeCanvas) {
-            this.activeCanvas.style.pointerEvents = 'auto';
-            this.activeCanvas.style.cursor = 'crosshair';
-        }
-        document.dispatchEvent(new CustomEvent('crop-started', { detail: { mediaId } }));
-    }
-    
-    async applyCrop() {
-        if(!this.targetMediaToCrop) return;
-        try {
-            const elem = this.activePageContent.querySelector(`.transform-box[data-id="${this.targetMediaToCrop}"]`);
-            if(!elem || !this.activeCanvas) {
-                this.exitCroppingMode();
-                return;
-            }
-            
-            const originalImg = elem.querySelector('img');
-            if(!originalImg) {
-                alert("Kırpılacak resim (img) elementi bulunamadı!");
-                this.exitCroppingMode();
-                return;
-            }
-            
-            const mediaId = this.targetMediaToCrop;
-            const width = parseFloat(elem.style.width);
-            const height = parseFloat(elem.style.height);
-            const left = parseFloat(elem.style.left);
-            const top = parseFloat(elem.style.top);
-            
-            const tempImg = new Image();
-            tempImg.crossOrigin = "Anonymous";
-            await new Promise((resolve, reject) => {
-                tempImg.onload = resolve;
-                tempImg.onerror = () => {
-                    console.warn("CORS ile yüklenemedi, normal yükleniyor...");
-                    tempImg.removeAttribute("crossOrigin");
-                    tempImg.src = originalImg.src; 
-                    tempImg.onload = resolve;
-                    tempImg.onerror = reject;
-                };
-                tempImg.src = originalImg.src;
-            });
-
-            // Görüntü kalitesini (çözünürlüğü) bozmamak için scale katsayısı belirliyoruz.
-            // Orijinal resmin boyutuna göre ölçeği hesaplar (en fazla 6 kat büyütür).
-            const scale = Math.min(Math.max(4, tempImg.naturalWidth / width), 6);
-            
-            const offCanvas = document.createElement('canvas');
-            offCanvas.width = width * scale;
-            offCanvas.height = height * scale;
-            const offCtx = offCanvas.getContext('2d');
-            
-            // Hassas Kırpma: Eğer resim döndürülmüşse (rotate), farenin çizdiği lasso 
-            // koordinatlarını ters açı (inverse rotation) ile resmin lokal düzlemine çevirmeliyiz!
-            const angleMatch = elem.style.transform.match(/rotate\(([-\d.]+)deg\)/);
-            const angle = angleMatch ? parseFloat(angleMatch[1]) : 0;
-            const cx = left + width / 2;
-            const cy = top + height / 2;
-            const rad = -angle * Math.PI / 180;
-            
-            offCtx.beginPath();
-            for(let i=0; i<this.lassoPath.length; i++) {
-                const px = this.lassoPath[i].x;
-                const py = this.lassoPath[i].y;
-                
-                // Merkeze göre ötele
-                const dx = px - cx;
-                const dy = py - cy;
-                
-                // Ters rotasyon uygula
-                const rx = dx * Math.cos(rad) - dy * Math.sin(rad);
-                const ry = dx * Math.sin(rad) + dy * Math.cos(rad);
-                
-                // Tekrar sol-üst (top-left) köşeye göre lokal koordinata çevir ve ölçekle
-                const localX = (rx + width / 2) * scale;
-                const localY = (ry + height / 2) * scale;
-                
-                if(i === 0) offCtx.moveTo(localX, localY);
-                else offCtx.lineTo(localX, localY);
-            }
-            offCtx.clip();
-            
-            // CSS object-fit: contain davranışını Canvas'a birebir yansıtıyoruz (sünmeyi önler).
-            const imgRatio = tempImg.naturalWidth / tempImg.naturalHeight;
-            const boxRatio = width / height;
-            let drawW, drawH, drawX, drawY;
-
-            if (imgRatio > boxRatio) {
-                drawW = width;
-                drawH = width / imgRatio;
-                drawX = 0;
-                drawY = (height - drawH) / 2;
-            } else {
-                drawH = height;
-                drawW = height * imgRatio;
-                drawY = 0;
-                drawX = (width - drawW) / 2;
-            }
-            
-            // Yüksek çözünürlükte, oranları bozulmadan kırpma alanına resmi çizdir.
-            offCtx.drawImage(tempImg, drawX * scale, drawY * scale, drawW * scale, drawH * scale);
-            
-            const newBase64 = offCanvas.toDataURL('image/png');
-            originalImg.src = newBase64;
-            
-            this.updateMediaData(mediaId, { content: newBase64 });
-            document.dispatchEvent(new CustomEvent('crop-finished', { detail: { mediaId } }));
-            
-            this.exitCroppingMode();
-        } catch (error) {
-            console.error("Crop Error:", error);
-            alert("Kırpma işlemi sırasında bir hata oluştu: " + error.message);
-            this.exitCroppingMode();
-        }
-    }
-    
-    exitCroppingMode() {
-        this.isCroppingMode = false;
-        this.targetMediaToCrop = null;
-        this.lassoPath = [];
-        if(this.activeCanvas) {
-            this.activeCanvas.style.pointerEvents = (this.currentMode === 'hand') ? 'none' : 'auto';
-            this.activeCanvas.style.cursor = 'default';
-            this.redrawCanvas(this.activeCanvas);
-        }
-    }
-
     startDrawing(e, canvas) {
+        if ((this.currentMode === 'hand' && !this.isCroppingMode) || !this.isEditing) return; 
+        if (!canvas.dataset.page) {
+            console.warn('Canvas sayfa numarası bulunamadı');
+            return;
+        }
+        e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+        canvas.setPointerCapture(e.pointerId);
+        this.isDrawing = true;
+        
         if (this.isCroppingMode) {
-            e.preventDefault(); e.stopPropagation();
-            canvas.setPointerCapture(e.pointerId);
-            this.isDrawing = true;
             this.lassoPath = [];
             const rect = canvas.getBoundingClientRect();
             const unX = (e.clientX - rect.left) / rect.width;
             const unY = (e.clientY - rect.top) / rect.height;
             this.lassoPath.push({ x: unX * canvas.width, y: unY * canvas.height });
-            return;
-        }
-        if (this.currentMode === 'hand' || !this.isEditing) return; 
-        if (!canvas.dataset.page) {
-            console.warn('Canvas sayfa numarası bulunamadı');
             return;
         }
         e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
@@ -1086,8 +954,8 @@ export class DrawingPad {
             for(let i=1; i<this.lassoPath.length; i++) {
                 ctx.lineTo(this.lassoPath[i].x, this.lassoPath[i].y);
             }
-            ctx.strokeStyle = '#eab308';
-            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#00f0ff'; // Canlı neon mavi
+            ctx.lineWidth = 3; // Daha hassas ve kalın
             ctx.setLineDash([5, 5]);
             ctx.stroke();
             ctx.restore();
@@ -1154,7 +1022,11 @@ export class DrawingPad {
         if(!this.isDrawing) return;
         this.isDrawing = false;
         
-        if (this.isCroppingMode && this.lassoPath.length > 2) {
+        if (this.isCroppingMode) {
+            if (this.lassoPath.length < 5) {
+                this.exitCroppingMode();
+                return;
+            }
             this.applyCrop();
             return;
         }
@@ -1178,5 +1050,118 @@ export class DrawingPad {
             unlockedCount++;
         });
         return unlockedCount;
+    }
+
+    startCroppingMode(mediaId) {
+        this.isCroppingMode = true;
+        this.lassoPath = [];
+        this.targetMediaToCrop = mediaId;
+        if (this.activeCanvas) {
+            this.activeCanvas.style.cursor = 'crosshair';
+            this.activeCanvas.style.pointerEvents = 'auto';
+            
+            // Show a premium toast/alert
+            const toast = document.createElement('div');
+            toast.className = 'crop-toast';
+            toast.innerHTML = '<i data-lucide="scissors" style="width:16px;height:16px;"></i> Görselin çevresini çizerek serbest kırpın';
+            toast.style.cssText = 'position:fixed; bottom:20px; left:50%; transform:translateX(-50%); background:rgba(0,240,255,0.9); color:#000; padding:10px 20px; border-radius:30px; font-weight:600; font-size:14px; z-index:9999; display:flex; align-items:center; gap:8px; box-shadow:0 4px 15px rgba(0,240,255,0.4); animation: fadeIn 0.3s ease;';
+            document.body.appendChild(toast);
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            setTimeout(() => {
+                toast.style.animation = 'fadeOut 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+    }
+
+    startRectCropMode(mediaId) {
+        this.startCroppingMode(mediaId);
+    }
+
+    exitCroppingMode() {
+        this.isCroppingMode = false;
+        this.lassoPath = [];
+        this.targetMediaToCrop = null;
+        if (this.activeCanvas) {
+            this.activeCanvas.style.cursor = '';
+            this.activeCanvas.style.pointerEvents = (this.currentMode === 'hand') ? 'none' : 'auto';
+            this.redrawCanvas(this.activeCanvas);
+        }
+    }
+
+    applyCrop() {
+        if (!this.targetMediaToCrop || this.lassoPath.length < 3) {
+            this.exitCroppingMode();
+            return;
+        }
+        const elem = this.activePageContent.querySelector(`.transform-box[data-id="${this.targetMediaToCrop}"]`);
+        if (!elem) {
+            this.exitCroppingMode();
+            return;
+        }
+        
+        const notebookId = this.getActiveNotebookId();
+        const pageId = this.activeCanvas.dataset.page;
+        const nb = this.getAppNotebooks().find(n => n.id === notebookId);
+        const page = nb?.pages.find(p => p.id === pageId);
+        const mediaData = page?.media.find(m => m.id === this.targetMediaToCrop);
+        
+        if (!mediaData) {
+            this.exitCroppingMode();
+            return;
+        }
+
+        // Calculate center of image in canvas coordinates
+        const centerX = elem.offsetLeft + elem.offsetWidth / 2;
+        const centerY = elem.offsetTop + elem.offsetHeight / 2;
+        const rotation = mediaData.rotation || 0;
+        const theta = -rotation * Math.PI / 180;
+
+        const polygonPoints = this.lassoPath.map(pt => {
+            // Rotate the point back around center
+            const dx = pt.x - centerX;
+            const dy = pt.y - centerY;
+            const rx = centerX + dx * Math.cos(theta) - dy * Math.sin(theta);
+            const ry = centerY + dx * Math.sin(theta) + dy * Math.cos(theta);
+            
+            // Calculate percentage within the image bounds
+            const pctX = ((rx - elem.offsetLeft) / elem.offsetWidth) * 100;
+            const pctY = ((ry - elem.offsetTop) / elem.offsetHeight) * 100;
+            
+            return {
+                x: Math.min(Math.max(0, pctX), 100),
+                y: Math.min(Math.max(0, pctY), 100)
+            };
+        });
+
+        // Optimize and filter out duplicates
+        const uniquePoints = [];
+        polygonPoints.forEach(pt => {
+            if (uniquePoints.length === 0) {
+                uniquePoints.push(pt);
+            } else {
+                const prev = uniquePoints[uniquePoints.length - 1];
+                const dist = Math.hypot(pt.x - prev.x, pt.y - prev.y);
+                if (dist > 1.0) { // 1.0% tolerance
+                    uniquePoints.push(pt);
+                }
+            }
+        });
+
+        if (uniquePoints.length >= 3) {
+            const pointsString = uniquePoints.map(p => `${p.x.toFixed(1)}% ${p.y.toFixed(1)}%`).join(', ');
+            const clipPathValue = `polygon(${pointsString})`;
+            
+            // Apply inline style to img element
+            const img = elem.querySelector('img');
+            if (img) {
+                img.style.clipPath = clipPathValue;
+            }
+            
+            // Save to database
+            this.updateMediaData(this.targetMediaToCrop, { clipPath: clipPathValue });
+        }
+        
+        this.exitCroppingMode();
     }
 }

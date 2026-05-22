@@ -27,7 +27,6 @@ export const AppManager = {
             ]
         }
     ],
-    activeNotebookId: null,
     activeNotebookId: null, // O an açık olan defterin ID'sini tutar
 
     /**
@@ -102,13 +101,14 @@ export const AppManager = {
             });
         }
         
-        const stickerBtn = document.getElementById('sticker-popup-btn');
+        const stickerBtn = document.getElementById('btn-pixabay-trigger');
         if(stickerBtn) {
             stickerBtn.addEventListener('click', () => {
                 const rightSidebar = document.getElementById('right-sidebar');
                 if(rightSidebar) {
                     rightSidebar.classList.toggle('active');
                     if (rightSidebar.classList.contains('active')) {
+                        // Pixabay sonuçlarını yükle (ilk açılışta)
                         const grid = document.getElementById('pixabay-grid');
                         if (grid && grid.innerHTML.trim() === '') {
                             this.fetchPixabayStickers('aesthetic sticker illustration');
@@ -643,13 +643,13 @@ export const AppManager = {
         
         // PageFlip kütüphanesini dinamik boyutlandırmayla başlat
         window.pageFlip = new St.PageFlip(bookDiv, {
-            width: 500, 
-            height: 700, 
+            width: 550, 
+            height: 733, 
             size: "stretch", 
             minWidth: 300, 
-            maxWidth: 650, 
+            maxWidth: 1000, 
             minHeight: 400, 
-            maxHeight: 850,
+            maxHeight: 1350,
             maxShadowOpacity: 0.5, 
             showCover: true, 
             mobileScrollSupport: true,
@@ -998,7 +998,7 @@ export const AppManager = {
             });
         }
     },
-    
+
     /**
      * Pixabay API üzerinden sticker/resim arar ve sağ çekmece içerisindeki ızgaraya ekler.
      * @param {string} query Aranacak kelime
@@ -1220,16 +1220,122 @@ export const AppManager = {
     }
 };
 document.addEventListener('DOMContentLoaded', async function() {
+    window.drawingPad = new DrawingPad();
+    window.drawingPad.getAppNotebooks = () => AppManager.notebooks;
+    window.drawingPad.getActiveNotebookId = () => AppManager.activeNotebookId;
+    window.drawingPad.onRenderSidebar = () => AppManager.renderSidebar();
+    
     await DatabaseManager.init();
     AppManager.init();
-    setTimeout(async () => {
-        window.drawingPad = new DrawingPad();
-        window.drawingPad.getAppNotebooks = () => AppManager.notebooks;
-        window.drawingPad.getActiveNotebookId = () => AppManager.activeNotebookId;
-        window.drawingPad.onRenderSidebar = () => AppManager.renderSidebar();
-        const savedDrawings = await DatabaseManager.loadDrawings();
-        if (savedDrawings && savedDrawings.length > 0) {
-            window.drawingPad.globalHistory = savedDrawings;
-        }
-    }, 100);
 });
+
+
+// Global Resim Kırpma Fonksiyonu
+window.promptImageCrop = function(imageSrc, callback) {
+    const modal = document.getElementById('image-crop-modal');
+    const cropperImage = document.getElementById('cropper-image');
+    const cancelBtn = document.getElementById('crop-cancel-btn');
+    const skipBtn = document.getElementById('crop-skip-btn');
+    const confirmBtn = document.getElementById('crop-confirm-btn');
+    const closeModal = modal ? modal.querySelector('.close-modal') : null;
+    
+    if (!modal || !cropperImage || !cancelBtn || !skipBtn || !confirmBtn || !closeModal) {
+        console.warn('Kırpma modalı veya gerekli butonlar bulunamadı, kırpma aşaması atlanıyor.');
+        return callback(imageSrc);
+    }
+
+    let cropperInstance = null;
+    
+    const cleanUp = () => {
+        if (cropperInstance) {
+            try {
+                cropperInstance.destroy();
+            } catch (e) {
+                console.error('Cropper yok edilirken hata:', e);
+            }
+            cropperInstance = null;
+        }
+        modal.style.display = 'none';
+        modal.classList.remove('active');
+        
+        // Önceki olay dinleyicilerini güvenle temizle
+        cancelBtn.onclick = null;
+        skipBtn.onclick = null;
+        confirmBtn.onclick = null;
+        closeModal.onclick = null;
+    };
+
+    // Resim yüklenirken cropper örneğini oluşturmak için onload olayınısrc atamasından ÖNCE bağlıyoruz
+    cropperImage.onload = () => {
+        if (cropperInstance) {
+            try {
+                cropperInstance.destroy();
+            } catch (e) {}
+            cropperInstance = null;
+        }
+        try {
+            if (typeof Cropper !== 'undefined') {
+                cropperInstance = new Cropper(cropperImage, {
+                    viewMode: 1,
+                    dragMode: 'crop',
+                    autoCropArea: 0.8,
+                    restore: false,
+                    guides: true,
+                    center: true,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                });
+            } else {
+                console.warn('Cropper kütüphanesi yüklü değil, görsel kırpılmadan yüklenecek.');
+            }
+        } catch (e) {
+            console.error('Cropper ilklendirme hatası:', e);
+        }
+    };
+    
+    cropperImage.src = imageSrc;
+    
+    // Modalı aç
+    modal.classList.add('active');
+    modal.style.display = 'flex';
+
+    cancelBtn.onclick = () => {
+        cleanUp();
+    };
+
+    closeModal.onclick = () => {
+        cleanUp();
+    };
+
+    skipBtn.onclick = () => {
+        cleanUp();
+        callback(imageSrc);
+    };
+
+    confirmBtn.onclick = () => {
+        if (!cropperInstance) {
+            console.warn('Cropper örneği hazır değil, görsel kırpılmadan ekleniyor.');
+            cleanUp();
+            callback(imageSrc);
+            return;
+        }
+        try {
+            const canvas = cropperInstance.getCroppedCanvas();
+            if (canvas) {
+                const finalBase64 = canvas.toDataURL('image/png');
+                cleanUp();
+                callback(finalBase64);
+            } else {
+                cleanUp();
+                callback(imageSrc);
+            }
+        } catch (e) {
+            console.error('Kırpma canvası alınırken hata oluştu:', e);
+            cleanUp();
+            callback(imageSrc);
+        }
+    };
+};
+

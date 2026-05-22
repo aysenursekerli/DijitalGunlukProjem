@@ -19,7 +19,37 @@ const ASSETS_TO_CACHE = [
   './assets/icons/icon.svg',
   'https://unpkg.com/lucide@latest', // Dışarıdan alınan İkon Kütüphanesi
   'https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js', // Sayfa çevirme kütüphanesi
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap' // Yazı Tipleri
+  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@700&display=swap', // Yazı Tipleri
+  // Sayfa Şablon Görselleri (Çevrimdışı PWA Desteği)
+  './assets/sayfalar/sayfa1.jpg',
+  './assets/sayfalar/sayfa2.jpg',
+  './assets/sayfalar/sayfa3.jpg',
+  './assets/sayfalar/sayfa4.jpg',
+  './assets/sayfalar/sayfa5.jpg',
+  './assets/sayfalar/sayfa6.jpg',
+  './assets/sayfalar/sayfa7.jpg',
+  './assets/sayfalar/sayfa8.jpg',
+  './assets/sayfalar/sayfa9.jpg',
+  './assets/sayfalar/sayfa10.jpg',
+  './assets/sayfalar/sayfa11.jpg',
+  './assets/sayfalar/sayfa12.jpg',
+  './assets/sayfalar/sayfa13.jpg',
+  './assets/sayfalar/sayfa14.jpg',
+  './assets/sayfalar/günlükPlanlayıcı1.jpg',
+  './assets/sayfalar/günlükPlanlayıcı2.jpg',
+  './assets/sayfalar/günlükPlanlayıcı3.jpg',
+  './assets/sayfalar/günlükPlanlayıcı4.jpg',
+  './assets/sayfalar/günkükPlanlayıcı5.jpg',
+  './assets/sayfalar/haftalıkPlanlayıcı1.jpg',
+  './assets/sayfalar/haftalıkPlanlayıcı2.jpg',
+  './assets/sayfalar/haftalıkPlanlayıcı3.jpg',
+  './assets/sayfalar/haftalıkPlanlayıcı4.jpg',
+  './assets/sayfalar/haftalıkPlanlayıcı5.jpg',
+  './assets/sayfalar/alışkanlıkTakibi1.jpg',
+  './assets/sayfalar/alışkanlıkTakibi2.jpg',
+  './assets/sayfalar/alışkanlıkTakibi3.jpg',
+  './assets/sayfalar/alışkanlıkTakibi4.jpg',
+  './assets/sayfalar/yıllık1.jpg'
 ];
 
 /**

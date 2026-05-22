@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Dijital Ajada - Notlarını, çizimlerini ve anılarını sakla">
+    <meta name="description" content="Dijital Ajanda - Notlarını, çizimlerini ve anılarını sakla">
     <meta name="theme-color" content="#1e293b">
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="assets/icons/icon.svg">
-    <title>Dijital Ajada</title>
+    <title>Dijital Ajanda</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
@@ -15,6 +15,7 @@
         rel="stylesheet">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css" />
 </head>
 <body>
     <!-- Splash Screen (Giriş Ekranı) -->
@@ -139,7 +140,7 @@
                 
                 <div class="dropdown" id="emoji-dropdown" style="flex-shrink:0;">
                     <button class="tool-btn" title="Emoji Ekle"><i data-lucide="smile"></i></button>
-                    <div class="dropdown-content emoji-grid">
+                    <div class="dropdown-content emoji-grid" style="grid-template-columns: repeat(5, 1fr); min-width: 220px;">
                         <div class="sticker-btn" data-sticker="⭐">⭐</div>
                         <div class="sticker-btn" data-sticker="📌">📌</div>
                         <div class="sticker-btn" data-sticker="💡">💡</div>
@@ -156,10 +157,39 @@
                         <div class="sticker-btn" data-sticker="📸">📸</div>
                         <div class="sticker-btn" data-sticker="📝">📝</div>
                         <div class="sticker-btn" data-sticker="🔍">🔍</div>
+                        <div class="sticker-btn" data-sticker="🐱">🐱</div>
+                        <div class="sticker-btn" data-sticker="🐶">🐶</div>
+                        <div class="sticker-btn" data-sticker="🦊">🦊</div>
+                        <div class="sticker-btn" data-sticker="🐨">🐨</div>
+                        <div class="sticker-btn" data-sticker="🦁">🦁</div>
+                        <div class="sticker-btn" data-sticker="🌸">🌸</div>
+                        <div class="sticker-btn" data-sticker="🌻">🌻</div>
+                        <div class="sticker-btn" data-sticker="🌲">🌲</div>
+                        <div class="sticker-btn" data-sticker="🍀">🍀</div>
+                        <div class="sticker-btn" data-sticker="🍂">🍂</div>
+                        <div class="sticker-btn" data-sticker="🍄">🍄</div>
+                        <div class="sticker-btn" data-sticker="🌙">🌙</div>
+                        <div class="sticker-btn" data-sticker="☀️">☀️</div>
+                        <div class="sticker-btn" data-sticker="🌊">🌊</div>
+                        <div class="sticker-btn" data-sticker="📚">📚</div>
+                        <div class="sticker-btn" data-sticker="✏️">✏️</div>
+                        <div class="sticker-btn" data-sticker="🎓">🎓</div>
+                        <div class="sticker-btn" data-sticker="🎒">🎒</div>
+                        <div class="sticker-btn" data-sticker="🔬">🔬</div>
+                        <div class="sticker-btn" data-sticker="📐">📐</div>
+                        <div class="sticker-btn" data-sticker="🖍️">🖍️</div>
+                        <div class="sticker-btn" data-sticker="📖">📖</div>
+                        <div class="sticker-btn" data-sticker="💻">💻</div>
+                        <div class="sticker-btn" data-sticker="🦄">🦄</div>
+                        <div class="sticker-btn" data-sticker="🐝">🐝</div>
+                        <div class="sticker-btn" data-sticker="🦋">🦋</div>
+                        <div class="sticker-btn" data-sticker="🐳">🐳</div>
+                        <div class="sticker-btn" data-sticker="🐷">🐷</div>
+                        <div class="sticker-btn" data-sticker="🌍">🌍</div>
                     </div>
                 </div>
 
-                <button class="tool-btn" id="sticker-popup-btn" title="Sticker Ekle" style="flex-shrink:0;"><i data-lucide="sticker"></i></button>
+                <button class="tool-btn" id="btn-pixabay-trigger" title="Çıkartma Ekle" style="flex-shrink:0;"><i data-lucide="sticker"></i></button>
                 
                 <div class="tool-separator" style="flex-shrink:0;"></div>
                 
@@ -204,13 +234,11 @@
                         </div>
                         <button class="nav-arrow-btn right-arrow" id="btn-next-edit-page" title="Sonraki Sayfa"><i
                                 data-lucide="chevron-right"></i></button>
-                    </div>
-                </div>
-            </div>
-        </div>
-            </div>
-        </div>
-    </div>
+                    </div> <!-- edit-workspace -->
+                </div> <!-- main-edit-area -->
+            </div> <!-- flex container -->
+        </div> <!-- view-edit -->
+    </div> <!-- app -->
     <div id="rename-modal" class="modal">
         <div class="modal-content rename-modal-content">
             <div class="modal-header">
@@ -246,11 +274,11 @@
     </div>
     <aside id="right-sidebar" class="right-sidebar">
         <div class="right-sidebar-header">
-            <h3>Stickerlar</h3>
+            <h3>Çıkartma Ekle</h3>
             <button class="close-btn" id="close-right-sidebar-btn" title="Kapat">&times;</button>
         </div>
         <div class="right-sidebar-search">
-            <input type="text" id="pixabay-search" value="aesthetic sticker illustration" placeholder="Sticker ara...">
+            <input type="text" id="pixabay-search" value="aesthetic sticker illustration" placeholder="Çıkartma ara...">
             <button id="pixabay-search-btn" title="Ara"><i data-lucide="search"></i></button>
         </div>
         <div class="right-sidebar-content">
@@ -271,7 +299,9 @@
         </div>
     </div>
 
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/page-flip/dist/js/page-flip.browser.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
     <script type="module" src="Arayuz.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -285,5 +315,28 @@
             });
         }
     </script>
+
+
+
+    <!-- Cropper Modal -->
+    <div id="image-crop-modal" class="modal">
+        <div class="modal-content" style="max-width: 800px; width: 90%;">
+            <div class="modal-header">
+                <h2>Resmi Kırp</h2>
+                <button class="close-modal"><i data-lucide="x"></i></button>
+            </div>
+            <div class="modal-body" style="height: 60vh; text-align: center; background: #333;">
+                <img id="cropper-image" style="max-width: 100%; display: block;" src="" crossorigin="anonymous">
+            </div>
+            <div class="modal-footer" style="justify-content: space-between; display: flex;">
+                <button class="btn btn-secondary" id="crop-cancel-btn">İptal</button>
+                <div>
+                    <button class="btn btn-secondary" id="crop-skip-btn">Olduğu Gibi Ekle</button>
+                    <button class="btn btn-primary" id="crop-confirm-btn">Kırp ve Ekle</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 </body>
 </html>
