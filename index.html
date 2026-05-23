@@ -78,15 +78,26 @@
             </div>
         </div>
         <div id="view-preview" class="view-layer">
-            <div class="preview-header">
-                <button class="nav-btn" id="btn-return-library"><i data-lucide="chevron-left"></i> Kütüphaneye Dön</button>
-                <div style="display: flex; gap: 10px; margin-left: auto;">
-                    <button class="nav-btn primary-btn" id="btn-edit-current-page" title="Şu an açık olan sayfayı düzenle"><i data-lucide="pencil"></i> Düzenle</button>
-                    <button class="nav-btn" id="btn-add-page"><i data-lucide="file-plus"></i> Yeni Sayfa Ekle</button>
-                    <button class="nav-btn" id="theme-toggle-btn-preview" title="Tema Değiştir"><i data-lucide="moon"></i></button>
+            <div class="preview-layout">
+                <div class="preview-sidebar">
+                    <div class="sidebar-top">
+                        <button class="nav-btn" id="btn-return-library"><i data-lucide="chevron-left"></i> Kütüphaneye Dön</button>
+                    </div>
+                    <div class="sidebar-cover-container" id="sidebar-cover-container">
+                        <!-- Kapak dinamik olarak buraya eklenecek -->
+                    </div>
                 </div>
-            </div>
-            <div class="container" id="main-container">
+                <div class="preview-content">
+                    <div class="preview-header">
+                        <div style="display: flex; gap: 10px; margin-left: auto;">
+                            <button class="nav-btn primary-btn" id="btn-edit-current-page" title="Şu an açık olan sayfayı düzenle"><i data-lucide="pencil"></i> Düzenle</button>
+                            <button class="nav-btn" id="btn-add-page"><i data-lucide="file-plus"></i> Yeni Sayfa Ekle</button>
+                            <button class="nav-btn" id="theme-toggle-btn-preview" title="Tema Değiştir"><i data-lucide="moon"></i></button>
+                        </div>
+                    </div>
+                    <div class="container" id="main-container">
+                    </div>
+                </div>
             </div>
         </div>
         <div id="view-edit" class="view-layer" style="flex-direction: column;">

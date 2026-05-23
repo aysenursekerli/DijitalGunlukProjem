@@ -1132,3 +1132,95 @@ body {
 .crop-cancel-btn { background: #333; }
 .crop-confirm-btn { background: #ff3b30; }
 .crop-actions button:hover { transform: scale(1.1); }
+
+/* --- VIEW PREVIEW RESTRUCTURING --- */
+.preview-layout {
+    display: flex;
+    width: 100%;
+    height: 100vh;
+    overflow: hidden;
+    background: var(--bg);
+}
+
+.preview-sidebar {
+    width: 320px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+.sidebar-top {
+    margin-bottom: 30px;
+}
+
+.sidebar-cover-container {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.sidebar-cover {
+    width: 220px;
+    height: 310px;
+    border-radius: 8px 16px 16px 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.6), inset -5px 0 15px rgba(0,0,0,0.2);
+    color: white;
+    text-align: center;
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+}
+
+.sidebar-cover h2 {
+    font-size: 1.5rem;
+    z-index: 2;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+    font-family: 'Playfair Display', serif;
+}
+
+.sidebar-cover::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    background: linear-gradient(to right, rgba(255,255,255,0.1), rgba(0,0,0,0.2), rgba(255,255,255,0.05));
+    border-left: 1px solid rgba(255,255,255,0.2);
+    border-right: 1px solid rgba(0,0,0,0.4);
+    z-index: 1;
+}
+
+.preview-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    background: radial-gradient(circle at center, var(--surface2) 0%, var(--bg) 100%);
+}
+
+.preview-content .preview-header {
+    padding: 15px 30px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(15,17,23,0.5);
+    backdrop-filter: blur(10px);
+    z-index: 5;
+}
+
+.preview-content .container {
+    flex: 1;
+    overflow: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}

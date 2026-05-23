@@ -1,6 +1,7 @@
 import { DatabaseManager } from './Veritabani.js';
 import { DrawingPad } from './CanvasMotoru.js';
 import { generateTemplateContent, getNotebookCardHTML } from './TemplateManager.js';
+import { OnboardingManager } from './OnboardingManager.js';
 /**
  * AppManager (Uygulama Yöneticisi): Projenin kalbidir.
  * 3 farklı aşamayı (Phase) yönetir:
@@ -13,20 +14,7 @@ export const AppManager = {
     views: {},
     activePageData: null,
     currentCalDate: new Date(),
-    notebooks: [
-        {
-            id: 'nb-sample-1',
-            name: 'Dijital Ajanda',
-            coverColor: '#1e293b',
-            pattern: 'blank',
-            pages: [
-                { id: 'pg-sample-1', snapshot: null },
-                { id: 'pg-sample-2', snapshot: null },
-                { id: 'pg-sample-3', snapshot: null },
-                { id: 'pg-sample-4', snapshot: null }
-            ]
-        }
-    ],
+    notebooks: [],
     activeNotebookId: null, // O an açık olan defterin ID'sini tutar
 
     /**
@@ -43,10 +31,13 @@ export const AppManager = {
         };
         this.loadTheme();
         DatabaseManager.init().then(async () => {
-            const savedNotebooks = await DatabaseManager.loadNotebooks();
-            if (savedNotebooks && savedNotebooks.length > 0) {
-                this.notebooks = savedNotebooks;
+            let savedNotebooks = await DatabaseManager.loadNotebooks();
+            if (!savedNotebooks || savedNotebooks.length === 0) {
+                const manual = OnboardingManager.createManual();
+                await DatabaseManager.saveNotebooks([manual]);
+                savedNotebooks = [manual];
             }
+            this.notebooks = savedNotebooks;
             this.renderLibrary();
             if (AppManager.drawingPad) {
                 const savedDrawings = await DatabaseManager.loadDrawings();
@@ -552,18 +543,22 @@ export const AppManager = {
         this.activeNotebookId = id;
         const nb = this.notebooks.find(n => n.id === id);
         if(!nb) return;
+
+        const sidebarCoverContainer = document.getElementById('sidebar-cover-container');
+        if (sidebarCoverContainer) {
+            sidebarCoverContainer.innerHTML = `
+                <div class="sidebar-cover" style="background: ${nb.coverColor}">
+                    <h2>${nb.name}</h2>
+                </div>
+            `;
+        }
+
         const container = document.getElementById('main-container');
         container.innerHTML = ''; 
         const bookDiv = document.createElement('div');
         bookDiv.className = 'book';
         bookDiv.id = 'book';
-        bookDiv.innerHTML += `
-            <div class="page page-cover page-cover-top" data-density="hard">
-                <div class="page-content" style="background: ${nb.coverColor}">
-                    <h2>${nb.name}</h2>
-                </div>
-            </div>
-        `;
+        
         nb.pages.forEach((pageObj, index) => {
             let mediaHTML = '';
             if(pageObj.media && pageObj.media.length > 0) {
@@ -615,10 +610,10 @@ export const AppManager = {
                 </div>
             `;
         });
-        let totalPages = nb.pages.length + 2;
-        let dummyPageHtml = '';
+        
+        let totalPages = nb.pages.length;
         if (totalPages % 2 !== 0) {
-            dummyPageHtml = `
+            bookDiv.innerHTML += `
                 <div class="page dummy-page">
                     <div class="page-content" style="background: ${nb.coverColor}; display: flex; justify-content: center; align-items: center; color: rgba(255,255,255,0.5);">
                         Boş Sayfa
@@ -626,20 +621,13 @@ export const AppManager = {
                 </div>
             `;
         }
-        bookDiv.innerHTML += dummyPageHtml + `
-            <div class="page page-cover page-cover-bottom" data-density="hard">
-                <div class="page-content" style="background: ${nb.coverColor}">
-                    <h2>Son</h2>
-                </div>
-            </div>
-        `;
+
         container.appendChild(bookDiv);
         this.bindPageEvents(bookDiv);
         if(window.pageFlip) {
             window.pageFlip.destroy();
         }
         
-        // PageFlip kütüphanesini dinamik boyutlandırmayla başlat
         window.pageFlip = new St.PageFlip(bookDiv, {
             width: 550, 
             height: 733, 
@@ -649,19 +637,18 @@ export const AppManager = {
             minHeight: 400, 
             maxHeight: 1350,
             maxShadowOpacity: 0.5, 
-            showCover: true, 
+            showCover: false, 
             mobileScrollSupport: true,
             drawShadow: true
         });
         
-        // Sayfaları PageFlip'e yükle
         requestAnimationFrame(() => {
             window.pageFlip.loadFromHTML(bookDiv.querySelectorAll(".page"));
-            
             if (startPage > 0 && typeof window.pageFlip.turnToPage === 'function') {
                 window.pageFlip.turnToPage(startPage);
             }
         });
+        
         requestAnimationFrame(() => {
             setTimeout(() => {
                 const pages = bookDiv.querySelectorAll('.page');
@@ -670,6 +657,7 @@ export const AppManager = {
                 }));
             }, 150);
         });
+        
         if (window.pageFlip) {
             window.pageFlip.on('flip', (data) => {
                 setTimeout(() => {
@@ -680,6 +668,7 @@ export const AppManager = {
                 }, 50);
             });
         }
+        
         this.switchPhase(2);
         if (typeof lucide !== 'undefined') lucide.createIcons();
     },
